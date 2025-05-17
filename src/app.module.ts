@@ -1,9 +1,19 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { CraneModule } from './crane/crane.module';
+import { QuoteModule } from './quote/quote.module';
+import { RentModule } from './rent/rent.module';
 
 @Module({
   imports: [
     MongooseModule.forRoot('mongodb://localhost:27017/vilba-db'), // Cambia "vilba-db" por el nombre de tu DB
+    UsersModule,
+    AuthModule,
+    CraneModule,
+    QuoteModule,
+    RentModule,
   ],
   controllers: [],
   providers: [],
