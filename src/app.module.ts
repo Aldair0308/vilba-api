@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { CraneModule } from './crane/crane.module';
 import { QuoteModule } from './quote/quote.module';
 import { RentModule } from './rent/rent.module';
+import { PhotoModule } from './photo/photo.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { RentModule } from './rent/rent.module';
     CraneModule,
     QuoteModule,
     RentModule,
+    PhotoModule,
   ],
   controllers: [],
   providers: [],
