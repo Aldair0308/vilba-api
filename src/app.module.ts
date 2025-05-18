@@ -6,6 +6,7 @@ import { CraneModule } from './crane/crane.module';
 import { QuoteModule } from './quote/quote.module';
 import { RentModule } from './rent/rent.module';
 import { PhotoModule } from './photo/photo.module';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PhotoModule } from './photo/photo.module';
     QuoteModule,
     RentModule,
     PhotoModule,
+    FileModule,
   ],
   controllers: [],
   providers: [],
