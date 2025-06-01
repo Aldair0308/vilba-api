@@ -23,8 +23,19 @@ export class Crane {
   @Prop({ required: true, default: 'activo' })
   estado: string;
 
-  @Prop({ required: true, type: [String] })
-  tipoCotizacion: string[];
+  @Prop({ nullable: true })
+  category: string;
+
+  @Prop({
+    type: [
+      {
+        zona: { type: String, required: true },
+        precio: { type: [Number], required: true }, // Cambiado a array de números
+      },
+    ],
+    default: [],
+  })
+  precios: Array<{ zona: string; precio: number[] }>;
 }
 
 export const CraneSchema = SchemaFactory.createForClass(Crane);
