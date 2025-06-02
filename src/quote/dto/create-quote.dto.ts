@@ -1,4 +1,25 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsMongoId,
+  ValidateNested,
+  IsArray,
+  ArrayNotEmpty,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+class QuoteCraneDto {
+  @IsMongoId()
+  crane: string;
+
+  @IsNumber()
+  dias: number;
+
+  @IsNumber()
+  precio: number;
+}
 
 export class CreateQuoteDto {
   @IsString()
@@ -7,21 +28,30 @@ export class CreateQuoteDto {
   @IsString()
   zone: string;
 
-  @IsNumber()
-  hourlyRate: number;
+  @IsMongoId()
+  clientId: string;
 
-  @IsNumber()
-  @IsOptional()
-  dailyRate?: number;
+  @IsMongoId()
+  fileId: string;
 
-  @IsNumber()
-  @IsOptional()
-  projectRate?: number;
-
-  @IsEnum(['active', 'inactive'])
+  @IsEnum(['pending', 'rejected', 'aproved', 'active', 'completed'])
   @IsOptional()
   status?: string;
 
-  @IsMongoId()
-  crane: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => QuoteCraneDto)
+  cranes: QuoteCraneDto[];
+
+  @IsOptional()
+  @IsNumber()
+  iva?: number;
+
+  @IsOptional()
+  @IsString()
+  total?: string;
+
+  @IsString()
+  responsibleId: string;
 }
