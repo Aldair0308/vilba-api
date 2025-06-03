@@ -2,5 +2,5 @@ import { PartialType } from '@nestjs/mapped-types';
 import { CreateCraneDto } from './create-crane.dto';
 
 export class UpdateCraneDto extends PartialType(CreateCraneDto) {
-  precios?: Array<{ zona: string; precio: number[] }>;
+  precios?: Array<{ zona: string; precio: number }>;
 }

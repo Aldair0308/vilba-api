@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { File } from './schemas/file.schema';
-import { Patch } from '@nestjs/common';
 import { UpdateFileDto } from './dto/update-file.dto';
 
 export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
@@ -31,7 +30,9 @@ export class FileService {
     }
 
     const createdFile = new this.fileModel(fileData);
-    return createdFile.save();
+    const savedFile = await createdFile.save();
+    // Retornar el id primero y luego el resto de la información
+    return { _id: savedFile._id };
   }
 
   async findByDepartment(department: string) {
@@ -50,8 +51,8 @@ export class FileService {
     return this.fileModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} file`;
+  findOne(id: string) {
+    return this.fileModel.findById(id).exec();
   }
 
   async update(id: string, updateFileDto: UpdateFileDto) {

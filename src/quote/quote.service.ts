@@ -26,6 +26,10 @@ export class QuoteService {
     return this.quoteModel.find({ cranes: craneId }).populate('cranes').exec();
   }
 
+  async findByStatus(status: string): Promise<Quote[]> {
+    return this.quoteModel.find({ status }).populate('cranes').exec();
+  }
+
   async update(id: string, updateQuoteDto: UpdateQuoteDto): Promise<Quote> {
     return this.quoteModel
       .findByIdAndUpdate(id, updateQuoteDto, { new: true })

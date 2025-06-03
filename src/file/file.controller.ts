@@ -3,10 +3,10 @@ import {
   Post,
   Body,
   Get,
-  Query,
   Delete,
   Param,
   Patch,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileService } from './file.service';
 import { UpdateFileDto } from './dto/update-file.dto';
@@ -53,8 +53,12 @@ export class FileController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.fileService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const file = await this.fileService.findOne(id);
+    if (!file) {
+      throw new NotFoundException(`File with id ${id} not found`);
+    }
+    return file;
   }
 
   @Patch(':id')
