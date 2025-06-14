@@ -9,6 +9,7 @@ import { PhotoModule } from './photo/photo.module';
 import { FileModule } from './file/file.module';
 import { ClientModule } from './client/client.module';
 import { LogsModule } from './logs/logs.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { LogsModule } from './logs/logs.module';
     FileModule,
     ClientModule,
     LogsModule,
+    EventsModule,
   ],
   controllers: [],
   providers: [],
