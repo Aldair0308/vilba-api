@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateQuoteDto } from './dto/create-quote.dto';
@@ -28,6 +28,26 @@ export class QuoteService {
 
   async findByStatus(status: string): Promise<Quote[]> {
     return this.quoteModel.find({ status }).populate('cranes').exec();
+  }
+
+  async switchStatus(id: string, status: string): Promise<Quote> {
+    const quote = await this.quoteModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status,
+          updatedAt: new Date(),
+        },
+        { new: true },
+      )
+      .populate('cranes')
+      .exec();
+
+    if (!quote) {
+      throw new NotFoundException(`Quote with ID ${id} not found`);
+    }
+
+    return quote;
   }
 
   async update(id: string, updateQuoteDto: UpdateQuoteDto): Promise<Quote> {

@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsNotEmpty,
-  IsArray,
-  ValidateNested,
-} from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty, IsArray } from 'class-validator';
 
 export class CreateCraneDto {
   @IsString()
@@ -35,8 +29,4 @@ export class CreateCraneDto {
   @IsString({ each: true })
   @IsNotEmpty()
   tipoCotizacion: string[];
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  precios: Array<{ zona: string; precio: number }>;
 }

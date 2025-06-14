@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { QuoteService } from './quote.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
@@ -33,6 +35,26 @@ export class QuoteController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.quoteService.findOne(id);
+  }
+
+  @Put('switch/:id/:status')
+  async switchStatus(@Param('id') id: string, @Param('status') status: string) {
+    // Validar que el status sea uno de los permitidos
+    const validStatuses = [
+      'pending',
+      'rejected',
+      'aproved',
+      'active',
+      'completed',
+    ];
+
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException(
+        `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+      );
+    }
+
+    return this.quoteService.switchStatus(id, status);
   }
 
   @Patch(':id')

@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
-import { Crane } from '../../crane/entities/crane.entity';
 import { Client } from '../../client/schemas/client.schema';
 import { File } from '../../file/schemas/file.schema';
 

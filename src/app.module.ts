@@ -8,6 +8,7 @@ import { RentModule } from './rent/rent.module';
 import { PhotoModule } from './photo/photo.module';
 import { FileModule } from './file/file.module';
 import { ClientModule } from './client/client.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ClientModule } from './client/client.module';
     PhotoModule,
     FileModule,
     ClientModule,
+    LogsModule,
   ],
   controllers: [],
   providers: [],
