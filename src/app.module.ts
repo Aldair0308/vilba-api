@@ -8,8 +8,11 @@ import { RentModule } from './rent/rent.module';
 import { PhotoModule } from './photo/photo.module';
 import { FileModule } from './file/file.module';
 import { ClientModule } from './client/client.module';
-import { LogsModule } from './logs/logs.module';
+
 import { EventsModule } from './events/events.module';
+import { FirebaseModule } from './firebase/firebase.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { DevicesModule } from './devices/devices.module';
 
 @Module({
   imports: [
@@ -22,8 +25,11 @@ import { EventsModule } from './events/events.module';
     PhotoModule,
     FileModule,
     ClientModule,
-    LogsModule,
+
     EventsModule,
+    FirebaseModule,
+    NotificationsModule,
+    DevicesModule,
   ],
   controllers: [],
   providers: [],
