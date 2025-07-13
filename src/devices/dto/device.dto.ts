@@ -36,6 +36,24 @@ export class CreateDeviceDto {
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
 
+export class DeviceInfoDto {
+  @IsString()
+  @IsOptional()
+  brand?: string;
+
+  @IsString()
+  @IsOptional()
+  modelName?: string;
+
+  @IsString()
+  @IsOptional()
+  osName?: string;
+
+  @IsString()
+  @IsOptional()
+  osVersion?: string;
+}
+
 export class RegisterDeviceDto {
   @IsString()
   @IsNotEmpty()
@@ -43,10 +61,14 @@ export class RegisterDeviceDto {
 
   @IsString()
   @IsNotEmpty()
-  deviceId: string;
+  userId: string;
 
   @IsEnum(['ios', 'android', 'web'])
   platform: string;
+
+  @IsObject()
+  @IsOptional()
+  deviceInfo?: DeviceInfoDto;
 
   @IsString()
   @IsOptional()

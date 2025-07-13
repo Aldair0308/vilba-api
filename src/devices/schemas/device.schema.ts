@@ -9,8 +9,8 @@ export class Device extends Document {
   @Prop({ required: true })
   deviceId: string;
 
-  @Prop({ required: false })
-  userId?: string;
+  @Prop({ required: true })
+  userId: string;
 
   @Prop({ required: true, enum: ['ios', 'android', 'web'] })
   platform: string;

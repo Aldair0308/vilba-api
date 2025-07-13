@@ -26,9 +26,32 @@ export class DevicesController {
         throw new HttpException('Invalid token format', HttpStatus.BAD_REQUEST);
       }
 
+      // Generate deviceId from platform and device info
+      const deviceId = this.generateDeviceId(
+        registerDeviceDto.userId,
+        registerDeviceDto.platform,
+        registerDeviceDto.deviceInfo
+      );
+
+      // Set device name from device info if not provided
+      const deviceName = registerDeviceDto.deviceName || 
+        (registerDeviceDto.deviceInfo ? 
+          `${registerDeviceDto.deviceInfo.brand || ''} ${registerDeviceDto.deviceInfo.modelName || ''}`.trim() :
+          `${registerDeviceDto.platform} Device`);
+
       const device = await this.devicesService.create({
-        ...registerDeviceDto,
+        token: registerDeviceDto.token,
+        deviceId,
+        userId: registerDeviceDto.userId,
+        platform: registerDeviceDto.platform,
+        deviceName,
+        appVersion: registerDeviceDto.appVersion,
         isActive: true,
+        metadata: {
+          ...registerDeviceDto.metadata,
+          deviceInfo: registerDeviceDto.deviceInfo,
+          registeredAt: new Date().toISOString()
+        }
       });
 
       return {
@@ -38,6 +61,7 @@ export class DevicesController {
           id: device._id,
           deviceId: device.deviceId,
           platform: device.platform,
+          deviceName: device.deviceName,
           isActive: device.isActive
         }
       };
@@ -50,6 +74,16 @@ export class DevicesController {
         HttpStatus.BAD_REQUEST
       );
     }
+  }
+
+  private generateDeviceId(userId: string, platform: string, deviceInfo?: any): string {
+    // Create a unique device identifier
+    const timestamp = Date.now();
+    const deviceIdentifier = deviceInfo ? 
+      `${deviceInfo.brand || 'unknown'}-${deviceInfo.modelName || 'unknown'}` :
+      'unknown-device';
+    
+    return `${platform}-${userId.slice(-8)}-${deviceIdentifier}-${timestamp}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
   }
 
   @Post()

@@ -34,16 +34,34 @@ export class FirebaseService {
     }
   }
 
-  async sendPush(token: string, title: string, body: string) {
+  async sendPush(token: string, title: string, body: string, imageUrl?: string) {
     if (!this.isInitialized) {
       throw new Error('Firebase is not initialized. Please configure serviceAccountKey.json');
     }
 
     try {
-      return await admin.messaging().send({
+      const message: any = {
         token,
         notification: { title, body },
-      });
+      };
+
+      // Add image if provided
+      if (imageUrl) {
+        message.notification.imageUrl = imageUrl;
+        // For Android, also add to data payload for better compatibility
+        message.data = {
+          imageUrl: imageUrl
+        };
+        // For web notifications
+        message.webpush = {
+          notification: {
+            icon: imageUrl,
+            image: imageUrl
+          }
+        };
+      }
+
+      return await admin.messaging().send(message);
     } catch (error) {
       // Handle common Firebase messaging errors
       if (error.code === 'messaging/invalid-argument') {
@@ -56,7 +74,7 @@ export class FirebaseService {
     }
   }
 
-  async sendPushToMultiple(tokens: string[], title: string, body: string) {
+  async sendPushToMultiple(tokens: string[], title: string, body: string, imageUrl?: string) {
     if (!this.isInitialized) {
       throw new Error('Firebase is not initialized. Please configure serviceAccountKey.json');
     }
@@ -68,10 +86,28 @@ export class FirebaseService {
 
       for (const token of tokens) {
         try {
-          const result = await admin.messaging().send({
+          const message: any = {
             token,
             notification: { title, body },
-          });
+          };
+
+          // Add image if provided
+          if (imageUrl) {
+            message.notification.imageUrl = imageUrl;
+            // For Android, also add to data payload for better compatibility
+            message.data = {
+              imageUrl: imageUrl
+            };
+            // For web notifications
+            message.webpush = {
+              notification: {
+                icon: imageUrl,
+                image: imageUrl
+              }
+            };
+          }
+
+          const result = await admin.messaging().send(message);
           results.push({ success: true, messageId: result });
           successCount++;
         } catch (error) {

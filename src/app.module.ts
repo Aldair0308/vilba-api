@@ -13,6 +13,7 @@ import { EventsModule } from './events/events.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DevicesModule } from './devices/devices.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { DevicesModule } from './devices/devices.module';
     PhotoModule,
     FileModule,
     ClientModule,
-
+    LogsModule,
     EventsModule,
     FirebaseModule,
     NotificationsModule,

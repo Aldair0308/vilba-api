@@ -9,8 +9,8 @@ export class NotificationsController {
   @Post()
   async send(@Body() body: SendNotificationDto) {
     try {
-      const { token, title, message } = body;
-      const result = await this.firebaseService.sendPush(token, title, message);
+      const { token, title, message, imageUrl } = body;
+      const result = await this.firebaseService.sendPush(token, title, message, imageUrl);
       return {
         success: true,
         messageId: result,
@@ -31,8 +31,8 @@ export class NotificationsController {
   @Post('multiple')
   async sendToMultiple(@Body() body: SendMultipleNotificationDto) {
     try {
-      const { tokens, title, message } = body;
-      const result = await this.firebaseService.sendPushToMultiple(tokens, title, message);
+      const { tokens, title, message, imageUrl } = body;
+      const result = await this.firebaseService.sendPushToMultiple(tokens, title, message, imageUrl);
       return {
         success: true,
         successCount: result.successCount,

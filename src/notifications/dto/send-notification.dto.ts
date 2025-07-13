@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, ArrayNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ArrayNotEmpty, IsOptional, IsUrl } from 'class-validator';
 
 export class SendNotificationDto {
   @IsString()
@@ -12,6 +12,11 @@ export class SendNotificationDto {
   @IsString()
   @IsNotEmpty()
   message: string;
+
+  @IsString()
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 }
 
 export class SendMultipleNotificationDto {
@@ -27,4 +32,9 @@ export class SendMultipleNotificationDto {
   @IsString()
   @IsNotEmpty()
   message: string;
+
+  @IsString()
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 }
