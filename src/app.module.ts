@@ -8,6 +8,7 @@ import { RentModule } from './rent/rent.module';
 import { PhotoModule } from './photo/photo.module';
 import { FileModule } from './file/file.module';
 import { ClientModule } from './client/client.module';
+
 import { EventsModule } from './events/events.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { NotificationsModule } from './notifications/notifications.module';
