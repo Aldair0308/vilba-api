@@ -8,7 +8,6 @@ import { RentModule } from './rent/rent.module';
 import { PhotoModule } from './photo/photo.module';
 import { FileModule } from './file/file.module';
 import { ClientModule } from './client/client.module';
-
 import { EventsModule } from './events/events.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -17,7 +16,9 @@ import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/vilba-db'), // Cambia "vilba-db" por el nombre de tu DB
+    MongooseModule.forRoot(
+      'mongodb://mongo:WhzjKKxfCulemUnbfUZNzjwyYrtrpAWk@shinkansen.proxy.rlwy.net:32286',
+    ),
     UsersModule,
     AuthModule,
     CraneModule,
