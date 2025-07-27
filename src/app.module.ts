@@ -13,7 +13,7 @@ import { EventsModule } from './events/events.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DevicesModule } from './devices/devices.module';
-import { LogsModule } from './logs/logs.module';
+import { LogsModule } from './slogs/logs.module';
 
 @Module({
   imports: [
