@@ -14,15 +14,53 @@ export class FirebaseService {
 
   private initializeFirebase() {
     try {
-      const serviceAccountPath = path.resolve('serviceAccountKey.json');
-      
-      if (!fs.existsSync(serviceAccountPath)) {
-        this.logger.warn('serviceAccountKey.json not found. Firebase notifications will not work. Please add your Firebase service account key.');
+      let serviceAccount: any;
+
+      // Try to get credentials from environment variables first (for production)
+      if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        try {
+          serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+          this.logger.log('Using Firebase credentials from environment variable');
+        } catch (parseError) {
+          this.logger.error('Failed to parse FIREBASE_SERVICE_ACCOUNT environment variable:', parseError.message);
+        }
+      }
+
+      // If no environment variable, try to load from file (for development)
+      if (!serviceAccount) {
+        const serviceAccountPath = path.resolve('serviceAccountKey.json');
+        
+        if (fs.existsSync(serviceAccountPath)) {
+          serviceAccount = require(serviceAccountPath);
+          this.logger.log('Using Firebase credentials from serviceAccountKey.json file');
+        }
+      }
+
+      // If still no credentials found, try individual environment variables
+      if (!serviceAccount && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+        serviceAccount = {
+          type: 'service_account',
+          project_id: process.env.FIREBASE_PROJECT_ID,
+          private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+          private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          client_email: process.env.FIREBASE_CLIENT_EMAIL,
+          client_id: process.env.FIREBASE_CLIENT_ID,
+          auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+          token_uri: 'https://oauth2.googleapis.com/token',
+          auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+          client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.FIREBASE_CLIENT_EMAIL)}`
+        };
+        this.logger.log('Using Firebase credentials from individual environment variables');
+      }
+
+      if (!serviceAccount) {
+        this.logger.warn('No Firebase credentials found. Please configure either:');
+        this.logger.warn('1. FIREBASE_SERVICE_ACCOUNT environment variable with full JSON');
+        this.logger.warn('2. serviceAccountKey.json file');
+        this.logger.warn('3. Individual environment variables (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL)');
         return;
       }
 
-      const serviceAccount = require(serviceAccountPath);
-      
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
