@@ -14,6 +14,7 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DevicesModule } from './devices/devices.module';
 import { LogsModule } from './slogs/logs.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { LogsModule } from './slogs/logs.module';
     FirebaseModule,
     NotificationsModule,
     DevicesModule,
+    SchedulerModule,
   ],
   controllers: [],
   providers: [],

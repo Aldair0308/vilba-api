@@ -1,0 +1,20 @@
+import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
+import { SchedulerService } from './scheduler.service';
+import { SchedulerController } from './scheduler.controller';
+import { EventsModule } from '../events/events.module';
+import { DevicesModule } from '../devices/devices.module';
+import { FirebaseModule } from '../firebase/firebase.module';
+
+@Module({
+  imports: [
+    ScheduleModule.forRoot(),
+    EventsModule,
+    DevicesModule,
+    FirebaseModule,
+  ],
+  controllers: [SchedulerController],
+  providers: [SchedulerService],
+  exports: [SchedulerService],
+})
+export class SchedulerModule {}

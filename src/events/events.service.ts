@@ -17,6 +17,19 @@ export class EventsService {
     
     console.log(`Event "${savedEvent.title}" created successfully`);
     
+    // Log información sobre notificaciones automáticas
+    const now = new Date();
+    const eventDate = new Date(savedEvent.date);
+    const timeDiff = eventDate.getTime() - now.getTime();
+    
+    if (timeDiff > 0) {
+      const hoursUntilEvent = Math.round(timeDiff / (1000 * 60 * 60));
+      console.log(`📅 Event "${savedEvent.title}" scheduled for ${eventDate.toISOString()}`);
+      console.log(`⏰ Automatic notification will be sent in approximately ${hoursUntilEvent} hours`);
+    } else {
+      console.log(`⚠️ Event "${savedEvent.title}" is scheduled in the past - no automatic notification will be sent`);
+    }
+    
     return savedEvent;
   }
 
@@ -118,5 +131,55 @@ export class EventsService {
       ...additionalData,
     };
     return this.create(eventData);
+  }
+
+  // Buscar eventos que están próximos a iniciar (para notificaciones)
+  async findUpcomingEvents(minutesAhead: number = 1): Promise<Event[]> {
+    const now = new Date();
+    const futureTime = new Date(now.getTime() + (minutesAhead * 60000));
+    
+    return this.eventModel
+      .find({
+        date: {
+          $gte: now,
+          $lte: futureTime,
+        },
+        status: 'scheduled'
+      })
+      .sort({ date: 1 })
+      .exec();
+  }
+
+  // Buscar eventos de hoy
+  async findTodayEvents(): Promise<Event[]> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    
+    return this.eventModel
+      .find({
+        date: {
+          $gte: startOfDay,
+          $lt: endOfDay,
+        },
+      })
+      .sort({ date: 1 })
+      .exec();
+  }
+
+  // Buscar eventos de la próxima semana
+  async findNextWeekEvents(): Promise<Event[]> {
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+    
+    return this.eventModel
+      .find({
+        date: {
+          $gte: now,
+          $lte: nextWeek,
+        },
+      })
+      .sort({ date: 1 })
+      .exec();
   }
 }

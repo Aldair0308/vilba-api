@@ -6,6 +6,7 @@ API backend para la aplicación Vilba, construida con NestJS y Firebase.
 
 - 🔥 **Firebase Push Notifications** - Notificaciones push con soporte para imágenes
 - 📱 **Device Management** - Registro y gestión de dispositivos móviles
+- ⏰ **Automatic Event Notifications** - Notificaciones automáticas cuando los eventos están por iniciar
 - 🔐 **Authentication** - Sistema de autenticación integrado
 - 📊 **Multiple Modules** - Gestión de usuarios, eventos, archivos, fotos, cotizaciones y más
 
@@ -72,6 +73,29 @@ Content-Type: application/json
   "imageUrl": "https://ejemplo.com/imagen.jpg" // opcional
 }
 ```
+
+### Notificaciones Automáticas de Eventos
+
+El sistema envía automáticamente notificaciones push cuando los eventos están por iniciar.
+
+#### Enviar notificación manual de evento
+```bash
+POST /scheduler/send-event-notification/:eventId
+```
+
+#### Enviar notificación solo a asistentes
+```bash
+POST /scheduler/send-event-notification-attendees/:eventId
+```
+
+#### Consultar eventos próximos
+```bash
+GET /events/upcoming/:minutes
+GET /events/today
+GET /events/next-week
+```
+
+Ver [AUTOMATIC_NOTIFICATIONS.md](./AUTOMATIC_NOTIFICATIONS.md) para documentación completa.
 
 ### Gestión de Dispositivos
 

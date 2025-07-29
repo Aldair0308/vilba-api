@@ -42,6 +42,22 @@ export class EventsController {
     return this.eventsService.findByDateRange(start, end);
   }
 
+  @Get('upcoming/:minutes')
+  findUpcomingEvents(@Param('minutes') minutes: string) {
+    const minutesAhead = parseInt(minutes) || 1;
+    return this.eventsService.findUpcomingEvents(minutesAhead);
+  }
+
+  @Get('today')
+  findTodayEvents() {
+    return this.eventsService.findTodayEvents();
+  }
+
+  @Get('next-week')
+  findNextWeekEvents() {
+    return this.eventsService.findNextWeekEvents();
+  }
+
   @Get('user/:userId/date-range')
   findByUserAndDateRange(
     @Param('userId') userId: string,
