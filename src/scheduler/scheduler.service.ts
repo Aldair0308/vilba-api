@@ -16,7 +16,9 @@ export class SchedulerService {
   ) {}
 
   // Ejecutar cada minuto para verificar eventos que deben iniciar
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_MINUTE, {
+    name: 'eventNotificationChecker'
+  })
   async checkEventNotifications() {
     try {
       // Buscar eventos que deben iniciar en el próximo minuto
