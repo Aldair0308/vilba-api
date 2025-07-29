@@ -16,16 +16,20 @@ El sistema de notificaciones automáticas envía notificaciones push a todos los
 
 ### 1. Scheduler Automático
 El servicio `SchedulerService` ejecuta una tarea cada minuto que:
-1. Busca eventos que deben iniciar en el próximo minuto
-2. Filtra solo eventos con status `scheduled`
+1. Busca eventos que necesitan notificación:
+   - **Eventos próximos**: que deben iniciar en el próximo minuto
+   - **Eventos del día actual**: que ya pasaron su hora de inicio pero fueron creados hoy y no han sido notificados
+2. Filtra solo eventos con status `scheduled` y que no han sido notificados (`notified: false`)
 3. Obtiene todos los tokens de dispositivos activos
 4. Envía notificaciones push a todos los dispositivos
+5. Marca los eventos como notificados para evitar duplicados
 
 ### 2. Creación de Eventos
 Cuando se crea un evento, el sistema:
-1. Guarda el evento en la base de datos
+1. Guarda el evento en la base de datos con `notified: false`
 2. Calcula cuándo se enviará la notificación automática
-3. Registra información en los logs
+3. Si el evento es para hoy pero ya pasó la hora, se notificará inmediatamente
+4. Registra información en los logs
 
 ### 3. Formato de Notificación
 - **Título**: `🔔 Evento: [Título del evento]`
@@ -34,20 +38,49 @@ Cuando se crea un evento, el sistema:
 ## Endpoints Disponibles
 
 ### Notificaciones Manuales
+```http
+POST /events/notify-all
+Content-Type: application/json
 
-#### Enviar notificación a todos los dispositivos
-```bash
-POST /scheduler/send-event-notification/:eventId
+{
+  "title": "Título de la notificación",
+  "message": "Mensaje de la notificación"
+}
 ```
 
-#### Enviar notificación solo a asistentes del evento
-```bash
-POST /scheduler/send-event-notification-attendees/:eventId
+### Notificación para Evento Específico
+```http
+POST /events/:id/notify
 ```
 
-#### Verificar estado del scheduler
-```bash
-GET /scheduler/test
+### Notificación para Asistentes de un Evento
+```http
+POST /events/:id/notify-attendees
+```
+
+### Consultar Eventos Próximos
+```http
+GET /events/upcoming?minutes=60
+```
+
+### Consultar Eventos que Necesitan Notificación
+```http
+GET /events/needing-notification
+```
+
+### Marcar Evento como Notificado
+```http
+POST /events/:id/mark-notified
+```
+
+### Forzar Verificación de Notificaciones
+```http
+POST /scheduler/check-notifications
+```
+
+### Obtener Estado del Scheduler
+```http
+GET /scheduler/status
 ```
 
 ### Consultas de Eventos

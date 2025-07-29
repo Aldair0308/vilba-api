@@ -23,4 +23,13 @@ export class SchedulerController {
       status: 'active'
     };
   }
+
+  @Post('check-notifications')
+  async forceCheckNotifications() {
+    await this.schedulerService.checkEventNotifications();
+    return {
+      message: 'Notification check completed',
+      timestamp: new Date().toISOString()
+    };
+  }
 }

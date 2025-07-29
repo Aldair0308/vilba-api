@@ -21,14 +21,14 @@ export class SchedulerService {
   })
   async checkEventNotifications() {
     try {
-      // Buscar eventos que deben iniciar en el próximo minuto
-      const upcomingEvents = await this.eventsService.findUpcomingEvents(1);
+      // Buscar eventos que necesitan notificación (próximos + eventos del día actual no notificados)
+      const eventsNeedingNotification = await this.eventsService.findEventsNeedingNotification();
 
-      if (upcomingEvents.length === 0) {
+      if (eventsNeedingNotification.length === 0) {
         return;
       }
 
-      this.logger.log(`Found ${upcomingEvents.length} events starting soon`);
+      this.logger.log(`Found ${eventsNeedingNotification.length} events needing notification`);
 
       // Obtener todos los tokens de dispositivos activos
       const activeTokens = await this.devicesService.getActiveTokens();
@@ -39,13 +39,22 @@ export class SchedulerService {
       }
 
       // Enviar notificaciones para cada evento
-      for (const event of upcomingEvents) {
+      for (const event of eventsNeedingNotification) {
+        const now = new Date();
+        const eventDate = new Date(event.date);
+        const isPastEvent = eventDate < now;
+        
+        if (isPastEvent) {
+          this.logger.log(`Sending notification for past event "${event.title}" (created today but already started)`);
+        } else {
+          this.logger.log(`Sending notification for upcoming event "${event.title}"`);
+        }
+
         await this.sendEventNotification(event, activeTokens);
         
-        // Opcional: Marcar el evento como "en progreso" si quieres
-        // await this.eventsService.update(event._id.toString(), { 
-        //   status: EventStatus.IN_PROGRESS 
-        // });
+        // Marcar el evento como notificado
+        await this.eventsService.markAsNotified(event._id.toString());
+        this.logger.log(`Event "${event.title}" marked as notified`);
       }
 
     } catch (error) {

@@ -58,6 +58,11 @@ export class EventsController {
     return this.eventsService.findNextWeekEvents();
   }
 
+  @Get('needing-notification')
+  findEventsNeedingNotification() {
+    return this.eventsService.findEventsNeedingNotification();
+  }
+
   @Get('user/:userId/date-range')
   findByUserAndDateRange(
     @Param('userId') userId: string,

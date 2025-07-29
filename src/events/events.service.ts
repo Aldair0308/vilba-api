@@ -21,11 +21,16 @@ export class EventsService {
     const now = new Date();
     const eventDate = new Date(savedEvent.date);
     const timeDiff = eventDate.getTime() - now.getTime();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const isToday = eventDate >= startOfDay && eventDate < new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
     
     if (timeDiff > 0) {
       const hoursUntilEvent = Math.round(timeDiff / (1000 * 60 * 60));
       console.log(`📅 Event "${savedEvent.title}" scheduled for ${eventDate.toISOString()}`);
       console.log(`⏰ Automatic notification will be sent in approximately ${hoursUntilEvent} hours`);
+    } else if (isToday) {
+      console.log(`📅 Event "${savedEvent.title}" was scheduled for today at ${eventDate.toISOString()}`);
+      console.log(`🔔 Automatic notification will be sent immediately (event already started but created today)`);
     } else {
       console.log(`⚠️ Event "${savedEvent.title}" is scheduled in the past - no automatic notification will be sent`);
     }
@@ -148,6 +153,44 @@ export class EventsService {
       })
       .sort({ date: 1 })
       .exec();
+  }
+
+  // Buscar eventos que necesitan notificación (próximos + eventos del día actual no notificados)
+  async findEventsNeedingNotification(): Promise<EventDocument[]> {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const futureTime = new Date(now.getTime() + (1 * 60000)); // 1 minuto hacia adelante
+    
+    return this.eventModel
+      .find({
+        $or: [
+          // Eventos próximos a iniciar (en el próximo minuto)
+          {
+            date: {
+              $gte: now,
+              $lte: futureTime,
+            },
+            status: 'scheduled',
+            notified: { $ne: true }
+          },
+          // Eventos del día actual que ya pasaron pero no han sido notificados
+          {
+            date: {
+              $gte: startOfDay,
+              $lt: now,
+            },
+            status: 'scheduled',
+            notified: { $ne: true }
+          }
+        ]
+      })
+      .sort({ date: 1 })
+      .exec();
+  }
+
+  // Marcar evento como notificado
+  async markAsNotified(eventId: string): Promise<void> {
+    await this.eventModel.findByIdAndUpdate(eventId, { notified: true }).exec();
   }
 
   // Buscar eventos de hoy

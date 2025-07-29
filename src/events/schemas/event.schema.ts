@@ -62,6 +62,9 @@ export class Event {
   @Prop({ required: false })
   color?: string;
 
+  @Prop({ default: false })
+  notified: boolean;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 
