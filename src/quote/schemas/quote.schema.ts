@@ -13,6 +13,9 @@ export class QuoteCrane {
 
   @Prop({ required: true })
   precio: number;
+
+  @Prop({ type: Date, required: false })
+  fecha_entrega?: Date;
 }
 
 export const QuoteCraneSchema = SchemaFactory.createForClass(QuoteCrane);

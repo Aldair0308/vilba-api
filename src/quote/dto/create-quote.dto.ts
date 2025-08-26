@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsArray,
   ArrayNotEmpty,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -19,6 +20,10 @@ class QuoteCraneDto {
 
   @IsNumber()
   precio: number;
+
+  @IsOptional()
+  @IsDateString()
+  fecha_entrega?: string;
 }
 
 export class CreateQuoteDto {
