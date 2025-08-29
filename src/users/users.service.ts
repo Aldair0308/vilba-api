@@ -64,4 +64,8 @@ export class UsersService {
       .findByIdAndUpdate(userId, { password: hashedPassword })
       .exec();
   }
+
+  async findAdmins(): Promise<User[]> {
+    return await this.userModel.find({ rol: 'admin' }).exec();
+  }
 }

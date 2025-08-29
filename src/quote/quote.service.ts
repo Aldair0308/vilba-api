@@ -4,10 +4,18 @@ import { Model } from 'mongoose';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { Quote } from './schemas/quote.schema';
+import { UsersService } from '../users/users.service';
+import { ClientService } from '../client/client.service';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class QuoteService {
-  constructor(@InjectModel(Quote.name) private quoteModel: Model<Quote>) {}
+  constructor(
+    @InjectModel(Quote.name) private quoteModel: Model<Quote>,
+    private usersService: UsersService,
+    private clientService: ClientService,
+    private firebaseService: FirebaseService,
+  ) {}
 
   async create(createQuoteDto: CreateQuoteDto): Promise<Quote> {
     const createdQuote = new this.quoteModel(createQuoteDto);
@@ -30,7 +38,14 @@ export class QuoteService {
     return this.quoteModel.find({ status }).populate('cranes').exec();
   }
 
-  async switchStatus(id: string, status: string): Promise<Quote> {
+  async switchStatus(id: string, status: string, userId?: string): Promise<Quote> {
+    // Obtener la cotización actual para verificar el estado anterior
+    const currentQuote = await this.quoteModel.findById(id).populate('clientId').exec();
+    
+    if (!currentQuote) {
+      throw new NotFoundException(`Quote with ID ${id} not found`);
+    }
+
     const quote = await this.quoteModel
       .findByIdAndUpdate(
         id,
@@ -41,10 +56,12 @@ export class QuoteService {
         { new: true },
       )
       .populate('cranes')
+      .populate('clientId')
       .exec();
 
-    if (!quote) {
-      throw new NotFoundException(`Quote with ID ${id} not found`);
+    // Enviar notificación si el estado cambió de 'pending' a 'aproved'
+    if (currentQuote.status === 'pending' && status === 'aproved') {
+      await this.sendApprovalNotification(quote, userId);
     }
 
     return quote;
@@ -69,5 +86,48 @@ export class QuoteService {
       })
       .populate('cranes')
       .exec();
+  }
+
+  private async sendApprovalNotification(quote: Quote, userId?: string): Promise<void> {
+    try {
+      // Obtener información del usuario que aprobó
+      let userName = 'Usuario';
+      if (userId) {
+        const user = await this.usersService.findOne(userId);
+        if (user) {
+          userName = user.name;
+        }
+      }
+
+      // Obtener información del cliente
+      const client = quote.clientId as any;
+      const clientName = client?.name || 'Cliente desconocido';
+
+      // Contar el número de equipos
+      const numEquipment = quote.cranes.length;
+
+      // Obtener todos los administradores
+      const admins = await this.usersService.findAdmins();
+
+      // Crear el mensaje de notificación
+      const message = `${userName} ha aprobado una cotización con ${numEquipment} equipo${numEquipment !== 1 ? 's' : ''} para el cliente ${clientName}`;
+
+      // Enviar notificación a cada administrador
+      for (const admin of admins) {
+        // Aquí asumo que los administradores tienen tokens de dispositivo
+        // Si no los tienen, esta parte se puede omitir o manejar de otra manera
+        try {
+           await this.firebaseService.sendPush(
+             admin.email, // Usar email como token temporal, esto debería ser el token real del dispositivo
+             'Cotización Aprobada',
+             message,
+           );
+         } catch (error) {
+           console.error(`Error enviando notificación a admin ${admin.email}:`, error);
+         }
+      }
+    } catch (error) {
+      console.error('Error enviando notificaciones de aprobación:', error);
+    }
   }
 }

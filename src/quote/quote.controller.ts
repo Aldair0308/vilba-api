@@ -8,6 +8,7 @@ import {
   Delete,
   Put,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { QuoteService } from './quote.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
@@ -38,7 +39,11 @@ export class QuoteController {
   }
 
   @Put('switch/:id/:status')
-  async switchStatus(@Param('id') id: string, @Param('status') status: string) {
+  async switchStatus(
+    @Param('id') id: string, 
+    @Param('status') status: string,
+    @Query('userId') userId?: string
+  ) {
     // Validar que el status sea uno de los permitidos
     const validStatuses = [
       'pending',
@@ -54,7 +59,7 @@ export class QuoteController {
       );
     }
 
-    return this.quoteService.switchStatus(id, status);
+    return this.quoteService.switchStatus(id, status, userId);
   }
 
   @Patch(':id')
