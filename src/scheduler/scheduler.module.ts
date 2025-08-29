@@ -5,6 +5,7 @@ import { SchedulerController } from './scheduler.controller';
 import { EventsModule } from '../events/events.module';
 import { DevicesModule } from '../devices/devices.module';
 import { FirebaseModule } from '../firebase/firebase.module';
+import { QuoteModule } from '../quote/quote.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { FirebaseModule } from '../firebase/firebase.module';
     EventsModule,
     DevicesModule,
     FirebaseModule,
+    QuoteModule,
   ],
   controllers: [SchedulerController],
   providers: [SchedulerService],

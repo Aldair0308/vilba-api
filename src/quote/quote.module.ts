@@ -8,5 +8,6 @@ import { Quote, QuoteSchema } from './schemas/quote.schema';
   imports: [MongooseModule.forFeature([{ name: Quote.name, schema: QuoteSchema }])],
   controllers: [QuoteController],
   providers: [QuoteService],
+  exports: [QuoteService],
 })
 export class QuoteModule {}

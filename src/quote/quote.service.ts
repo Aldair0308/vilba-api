@@ -60,4 +60,14 @@ export class QuoteService {
   async remove(id: string): Promise<Quote> {
     return this.quoteModel.findByIdAndDelete(id).exec();
   }
+
+  async findQuotesWithDeliveryDates(): Promise<Quote[]> {
+    return this.quoteModel
+      .find({
+        status: { $in: ['aproved', 'active'] },
+        'cranes.fecha_entrega': { $exists: true, $ne: null }
+      })
+      .populate('cranes')
+      .exec();
+  }
 }

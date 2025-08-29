@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventsService } from '../events/events.service';
 import { DevicesService } from '../devices/devices.service';
 import { FirebaseService } from '../firebase/firebase.service';
+import { QuoteService } from '../quote/quote.service';
 import { EventStatus } from '../events/schemas/event.schema';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class SchedulerService {
     private readonly eventsService: EventsService,
     private readonly devicesService: DevicesService,
     private readonly firebaseService: FirebaseService,
+    private readonly quoteService: QuoteService,
   ) {}
 
   // Ejecutar cada minuto para verificar eventos que deben iniciar
@@ -140,6 +142,104 @@ export class SchedulerService {
     } catch (error) {
       this.logger.error('Error sending event notification to attendees:', error);
       throw error;
+    }
+  }
+
+  // Ejecutar todos los días a las 10:00 AM para verificar entregas
+  @Cron('0 10 * * *', {
+    name: 'deliveryNotificationChecker'
+  })
+  async checkDeliveryNotifications() {
+    try {
+      this.logger.log('Checking delivery notifications...');
+      
+      // Obtener cotizaciones aprobadas/activas con fechas de entrega
+      const quotesWithDeliveries = await this.quoteService.findQuotesWithDeliveryDates();
+      
+      if (quotesWithDeliveries.length === 0) {
+        this.logger.log('No quotes with delivery dates found');
+        return;
+      }
+
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // Normalizar fechas para comparación (solo día, mes, año)
+      const todayStr = today.toDateString();
+      const tomorrowStr = tomorrow.toDateString();
+      
+      // Obtener tokens de dispositivos activos
+      const activeTokens = await this.devicesService.getActiveTokens();
+      
+      if (activeTokens.length === 0) {
+        this.logger.warn('No active devices found for delivery notifications');
+        return;
+      }
+
+      let notificationsSent = 0;
+
+      // Revisar cada cotización
+      for (const quote of quotesWithDeliveries) {
+        for (const crane of quote.cranes) {
+          if (crane.fecha_entrega) {
+            const deliveryDate = new Date(crane.fecha_entrega);
+            const deliveryDateStr = deliveryDate.toDateString();
+            
+            // Notificación 1 día antes
+            if (deliveryDateStr === tomorrowStr) {
+              await this.sendDeliveryReminder(quote, crane, 'tomorrow', activeTokens);
+              notificationsSent++;
+            }
+            
+            // Notificación el día de la entrega
+            if (deliveryDateStr === todayStr) {
+              await this.sendDeliveryReminder(quote, crane, 'today', activeTokens);
+              notificationsSent++;
+            }
+          }
+        }
+      }
+      
+      this.logger.log(`Delivery notifications check completed. Sent ${notificationsSent} notifications`);
+      
+    } catch (error) {
+      this.logger.error('Error checking delivery notifications:', error);
+    }
+  }
+
+  private async sendDeliveryReminder(quote: any, crane: any, timing: 'today' | 'tomorrow', tokens: string[]) {
+    try {
+      const craneInfo = crane.crane?.nombre || crane.crane?.modelo || 'Equipo';
+      const deliveryDate = new Date(crane.fecha_entrega);
+      const formattedDate = deliveryDate.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      let title: string;
+      let body: string;
+      
+      if (timing === 'tomorrow') {
+        title = '📅 Recordatorio: Entrega Mañana';
+        body = `${craneInfo} debe ser entregado mañana (${formattedDate}) - Cotización: ${quote.name}`;
+      } else {
+        title = '🚛 Entrega Hoy';
+        body = `${craneInfo} debe ser entregado hoy (${formattedDate}) - Cotización: ${quote.name}`;
+      }
+      
+      const result = await this.firebaseService.sendPushToMultiple(
+        tokens,
+        title,
+        body
+      );
+      
+      this.logger.log(`Delivery reminder sent for ${craneInfo} (${timing}): Success: ${result.successCount}, Failures: ${result.failureCount}`);
+      
+    } catch (error) {
+      this.logger.error(`Error sending delivery reminder:`, error);
     }
   }
 }
