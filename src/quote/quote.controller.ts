@@ -87,4 +87,27 @@ export class QuoteController {
       userId: userId || 'not provided'
     };
   }
+
+  @Post(':id/test-status-notification')
+  async testStatusChangeNotification(
+    @Param('id') id: string, 
+    @Query('previousStatus') previousStatus: string = 'pending',
+    @Query('newStatus') newStatus: string = 'aproved',
+    @Query('userId') userId?: string
+  ) {
+    console.log(`🧪 Testing status change notification for quote ${id}`);
+    const quote = await this.quoteService.findOne(id);
+    
+    // Llamar directamente al método de notificación para pruebas
+    await (this.quoteService as any).sendStatusChangeNotificationToAdmins(quote, previousStatus, newStatus, userId);
+    
+    return {
+      success: true,
+      message: `Test status change notification sent for quote ${id}`,
+      quoteId: id,
+      previousStatus,
+      newStatus,
+      userId: userId || 'not provided'
+    };
+  }
 }

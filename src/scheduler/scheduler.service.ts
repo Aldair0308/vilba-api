@@ -210,7 +210,13 @@ export class SchedulerService {
 
   private async sendDeliveryReminder(quote: any, crane: any, timing: 'today' | 'tomorrow', tokens: string[]) {
     try {
-      const craneInfo = crane.crane?.nombre || crane.crane?.modelo || 'Equipo';
+      // Obtener información del equipo
+      const equipmentName = crane.crane?.nombre || crane.crane?.modelo || 'Equipo';
+      
+      // Obtener información del cliente
+      const clientName = quote.clientId?.name || 'Cliente';
+      
+      // Formatear la fecha
       const deliveryDate = new Date(crane.fecha_entrega);
       const formattedDate = deliveryDate.toLocaleDateString('es-ES', {
         weekday: 'long',
@@ -224,10 +230,10 @@ export class SchedulerService {
       
       if (timing === 'tomorrow') {
         title = '📅 Recordatorio: Entrega Mañana';
-        body = `${craneInfo} debe ser entregado mañana (${formattedDate}) - Cotización: ${quote.name}`;
+        body = `El equipo ${equipmentName} debe ser entregado al cliente ${clientName} mañana (${formattedDate})`;
       } else {
         title = '🚛 Entrega Hoy';
-        body = `${craneInfo} debe ser entregado hoy (${formattedDate}) - Cotización: ${quote.name}`;
+        body = `El equipo ${equipmentName} debe ser entregado al cliente ${clientName} hoy (${formattedDate})`;
       }
       
       const result = await this.firebaseService.sendPushToMultiple(
@@ -236,7 +242,7 @@ export class SchedulerService {
         body
       );
       
-      this.logger.log(`Delivery reminder sent for ${craneInfo} (${timing}): Success: ${result.successCount}, Failures: ${result.failureCount}`);
+      this.logger.log(`Delivery reminder sent for ${equipmentName} to ${clientName} (${timing}): Success: ${result.successCount}, Failures: ${result.failureCount}`);
       
     } catch (error) {
       this.logger.error(`Error sending delivery reminder:`, error);

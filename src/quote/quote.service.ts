@@ -67,8 +67,12 @@ export class QuoteService {
     if (currentQuote.status === 'pending' && status === 'aproved') {
       console.log(`🔄 Status changed from '${currentQuote.status}' to '${status}' - triggering approval notification`);
       await this.sendApprovalNotification(quote, userId);
-    } else {
-      console.log(`ℹ️ Status change from '${currentQuote.status}' to '${status}' - no notification needed`);
+    }
+    
+    // Enviar notificación a administradores sobre el cambio de estado
+    if (currentQuote.status !== status) {
+      console.log(`📢 Status changed from '${currentQuote.status}' to '${status}' - notifying administrators`);
+      await this.sendStatusChangeNotificationToAdmins(quote, currentQuote.status, status, userId);
     }
 
     return quote;
@@ -91,7 +95,8 @@ export class QuoteService {
         status: { $in: ['aproved', 'active'] },
         'cranes.fecha_entrega': { $exists: true, $ne: null }
       })
-      .populate('cranes')
+      .populate('cranes.crane')
+      .populate('clientId')
       .exec();
   }
 
@@ -176,6 +181,103 @@ export class QuoteService {
       }
     } catch (error) {
       console.error('❌ Error in approval notification process:', error);
+    }
+  }
+
+  private async sendStatusChangeNotificationToAdmins(
+    quote: Quote, 
+    previousStatus: string, 
+    newStatus: string, 
+    userId?: string
+  ): Promise<void> {
+    try {
+      console.log(`🔔 Starting status change notification process for quote ID: ${quote._id}`);
+      
+      // Obtener información del usuario que cambió el estado
+      let userName = 'Usuario';
+      if (userId) {
+        console.log(`📋 Looking up user info for userId: ${userId}`);
+        const user = await this.usersService.findOne(userId);
+        if (user) {
+          userName = user.name;
+          console.log(`✅ Found user: ${userName}`);
+        } else {
+          console.log(`⚠️ User not found for userId: ${userId}`);
+        }
+      } else {
+        console.log(`⚠️ No userId provided for status change notification`);
+      }
+
+      // Obtener información del cliente
+      const client = quote.clientId as any;
+      const clientName = client?.name || 'Cliente desconocido';
+      console.log(`🏢 Client name: ${clientName}`);
+
+      // Mapear estados a texto legible
+      const statusMap = {
+        'pending': 'Pendiente',
+        'aproved': 'Aprobada',
+        'rejected': 'Rechazada',
+        'active': 'Activa',
+        'completed': 'Completada'
+      };
+
+      const previousStatusText = statusMap[previousStatus] || previousStatus;
+      const newStatusText = statusMap[newStatus] || newStatus;
+
+      // Obtener todos los administradores
+      console.log(`👥 Fetching administrators...`);
+      const admins = await this.usersService.findAdmins();
+      console.log(`👥 Found ${admins.length} administrators`);
+
+      if (admins.length === 0) {
+        console.log(`⚠️ No administrators found in the system`);
+        return;
+      }
+
+      // Obtener tokens de dispositivos de los administradores
+      const adminIds = admins.map(admin => admin._id.toString());
+      console.log(`📱 Getting device tokens for admin IDs: ${adminIds.join(', ')}`);
+      
+      const allDevices = [];
+      for (const adminId of adminIds) {
+        const userDevices = await this.devicesService.findByUserId(adminId);
+        allDevices.push(...userDevices);
+      }
+      
+      const tokens = allDevices.map(device => device.token);
+       console.log(`📱 Found ${tokens.length} device tokens for administrators`);
+
+      if (tokens.length > 0) {
+        // Preparar el mensaje de notificación
+        const title = '📋 Estado de Cotización Actualizado';
+        const body = `La cotización "${quote.name}" del cliente ${clientName} cambió de ${previousStatusText} a ${newStatusText}. Actualizado por: ${userName}`;
+        
+        console.log(`📤 Sending notification to ${tokens.length} devices`);
+        console.log(`📝 Title: ${title}`);
+        console.log(`📝 Body: ${body}`);
+
+        try {
+          const result = await this.firebaseService.sendPushToMultiple(
+            tokens,
+            title,
+            body
+          );
+          
+          console.log(`✅ Status change notification sent successfully!`);
+          console.log(`📊 Success: ${result.successCount}, Failures: ${result.failureCount}`);
+          
+          if (result.failureCount > 0) {
+            console.log(`⚠️ Some notifications failed:`, result.responses.filter(r => !r.success));
+          }
+        } catch (error) {
+          console.error('❌ Error sending status change notifications:', error);
+        }
+      } else {
+        console.log('⚠️ No device tokens found for administrators');
+      }
+    } catch (error) {
+      console.error('❌ Error in status change notification process:', error);
     }
   }
 }
