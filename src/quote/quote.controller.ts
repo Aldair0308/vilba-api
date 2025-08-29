@@ -71,4 +71,20 @@ export class QuoteController {
   remove(@Param('id') id: string) {
     return this.quoteService.remove(id);
   }
+
+  @Post(':id/test-notification')
+  async testApprovalNotification(@Param('id') id: string, @Query('userId') userId?: string) {
+    console.log(`🧪 Testing approval notification for quote ${id}`);
+    const quote = await this.quoteService.findOne(id);
+    
+    // Llamar directamente al método de notificación para pruebas
+    await (this.quoteService as any).sendApprovalNotification(quote, userId);
+    
+    return {
+      success: true,
+      message: `Test notification sent for quote ${id}`,
+      quoteId: id,
+      userId: userId || 'not provided'
+    };
+  }
 }

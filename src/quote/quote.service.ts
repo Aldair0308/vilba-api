@@ -17,7 +17,9 @@ export class QuoteService {
     private clientService: ClientService,
     private firebaseService: FirebaseService,
     private devicesService: DevicesService,
-  ) {}
+  ) {
+    console.log('🔧 QuoteService initialized with FirebaseService and DevicesService');
+  }
 
   async create(createQuoteDto: CreateQuoteDto): Promise<Quote> {
     const createdQuote = new this.quoteModel(createQuoteDto);
@@ -63,7 +65,10 @@ export class QuoteService {
 
     // Enviar notificación si el estado cambió de 'pending' a 'aproved'
     if (currentQuote.status === 'pending' && status === 'aproved') {
+      console.log(`🔄 Status changed from '${currentQuote.status}' to '${status}' - triggering approval notification`);
       await this.sendApprovalNotification(quote, userId);
+    } else {
+      console.log(`ℹ️ Status change from '${currentQuote.status}' to '${status}' - no notification needed`);
     }
 
     return quote;
@@ -92,57 +97,85 @@ export class QuoteService {
 
   private async sendApprovalNotification(quote: Quote, userId?: string): Promise<void> {
     try {
+      console.log(`🔔 Starting approval notification process for quote ID: ${quote._id}`);
+      
       // Obtener información del usuario que aprobó
       let userName = 'Usuario';
       if (userId) {
+        console.log(`📋 Looking up user info for userId: ${userId}`);
         const user = await this.usersService.findOne(userId);
         if (user) {
           userName = user.name;
+          console.log(`✅ Found user: ${userName}`);
+        } else {
+          console.log(`⚠️ User not found for userId: ${userId}`);
         }
+      } else {
+        console.log(`⚠️ No userId provided for approval notification`);
       }
 
       // Obtener información del cliente
       const client = quote.clientId as any;
       const clientName = client?.name || 'Cliente desconocido';
+      console.log(`🏢 Client name: ${clientName}`);
 
       // Contar el número de equipos
       const numEquipment = quote.cranes.length;
+      console.log(`🏗️ Number of equipment: ${numEquipment}`);
 
       // Obtener todos los administradores
+      console.log(`👥 Fetching administrators...`);
       const admins = await this.usersService.findAdmins();
+      console.log(`👥 Found ${admins.length} administrators`);
+
+      if (admins.length === 0) {
+        console.log(`⚠️ No administrators found in the system`);
+        return;
+      }
 
       // Crear el mensaje de notificación
       const message = `${userName} ha aprobado una cotización con ${numEquipment} equipo${numEquipment !== 1 ? 's' : ''} para el cliente ${clientName}`;
+      console.log(`📝 Notification message: ${message}`);
 
       // Recopilar todos los tokens de dispositivos de administradores
       const adminTokens: string[] = [];
       
       for (const admin of admins) {
         try {
+          console.log(`🔍 Getting tokens for admin: ${admin.email} (ID: ${admin._id})`);
           const userTokens = await this.devicesService.getActiveTokensByUserId(admin._id.toString());
+          console.log(`📱 Found ${userTokens.length} active tokens for admin ${admin.email}`);
           adminTokens.push(...userTokens);
         } catch (error) {
-          console.error(`Error obteniendo tokens para admin ${admin.email}:`, error);
+          console.error(`❌ Error getting tokens for admin ${admin.email}:`, error);
         }
       }
 
+      console.log(`📱 Total admin tokens collected: ${adminTokens.length}`);
+      
       // Enviar notificación a todos los dispositivos de administradores si hay tokens
       if (adminTokens.length > 0) {
         try {
-          await this.firebaseService.sendPushToMultiple(
+          console.log(`🚀 Sending notification to ${adminTokens.length} devices...`);
+          const result = await this.firebaseService.sendPushToMultiple(
             adminTokens,
             'Cotización Aprobada',
             message,
           );
-          console.log(`Notificación enviada a ${adminTokens.length} dispositivos de administradores`);
+          console.log(`✅ Notification sent successfully!`);
+          console.log(`📊 Success: ${result.successCount}, Failures: ${result.failureCount}`);
+          
+          if (result.failureCount > 0) {
+            console.log(`⚠️ Some notifications failed:`, result.responses.filter(r => !r.success));
+          }
         } catch (error) {
-          console.error('Error enviando notificaciones múltiples:', error);
+          console.error('❌ Error sending multiple notifications:', error);
         }
       } else {
-        console.log('No se encontraron tokens de dispositivos para administradores');
+        console.log('⚠️ No device tokens found for administrators');
       }
     } catch (error) {
-      console.error('Error enviando notificaciones de aprobación:', error);
+      console.error('❌ Error in approval notification process:', error);
     }
   }
 }
