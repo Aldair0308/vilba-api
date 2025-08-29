@@ -7,6 +7,7 @@ import { Quote } from './schemas/quote.schema';
 import { UsersService } from '../users/users.service';
 import { ClientService } from '../client/client.service';
 import { FirebaseService } from '../firebase/firebase.service';
+import { DevicesService } from '../devices/devices.service';
 
 @Injectable()
 export class QuoteService {
@@ -15,6 +16,7 @@ export class QuoteService {
     private usersService: UsersService,
     private clientService: ClientService,
     private firebaseService: FirebaseService,
+    private devicesService: DevicesService,
   ) {}
 
   async create(createQuoteDto: CreateQuoteDto): Promise<Quote> {
@@ -112,19 +114,32 @@ export class QuoteService {
       // Crear el mensaje de notificación
       const message = `${userName} ha aprobado una cotización con ${numEquipment} equipo${numEquipment !== 1 ? 's' : ''} para el cliente ${clientName}`;
 
-      // Enviar notificación a cada administrador
+      // Recopilar todos los tokens de dispositivos de administradores
+      const adminTokens: string[] = [];
+      
       for (const admin of admins) {
-        // Aquí asumo que los administradores tienen tokens de dispositivo
-        // Si no los tienen, esta parte se puede omitir o manejar de otra manera
         try {
-           await this.firebaseService.sendPush(
-             admin.email, // Usar email como token temporal, esto debería ser el token real del dispositivo
-             'Cotización Aprobada',
-             message,
-           );
-         } catch (error) {
-           console.error(`Error enviando notificación a admin ${admin.email}:`, error);
-         }
+          const userTokens = await this.devicesService.getActiveTokensByUserId(admin._id.toString());
+          adminTokens.push(...userTokens);
+        } catch (error) {
+          console.error(`Error obteniendo tokens para admin ${admin.email}:`, error);
+        }
+      }
+
+      // Enviar notificación a todos los dispositivos de administradores si hay tokens
+      if (adminTokens.length > 0) {
+        try {
+          await this.firebaseService.sendPushToMultiple(
+            adminTokens,
+            'Cotización Aprobada',
+            message,
+          );
+          console.log(`Notificación enviada a ${adminTokens.length} dispositivos de administradores`);
+        } catch (error) {
+          console.error('Error enviando notificaciones múltiples:', error);
+        }
+      } else {
+        console.log('No se encontraron tokens de dispositivos para administradores');
       }
     } catch (error) {
       console.error('Error enviando notificaciones de aprobación:', error);

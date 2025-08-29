@@ -16,6 +16,9 @@ export class QuoteCrane {
 
   @Prop({ type: Date, required: false })
   fecha_entrega?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  entregado: boolean;
 }
 
 export const QuoteCraneSchema = SchemaFactory.createForClass(QuoteCrane);

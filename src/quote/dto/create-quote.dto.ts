@@ -8,6 +8,7 @@ import {
   IsArray,
   ArrayNotEmpty,
   IsDateString,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -24,6 +25,10 @@ class QuoteCraneDto {
   @IsOptional()
   @IsDateString()
   fecha_entrega?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  entregado?: boolean;
 }
 
 export class CreateQuoteDto {

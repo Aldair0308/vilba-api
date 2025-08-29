@@ -6,6 +6,7 @@ import { Quote, QuoteSchema } from './schemas/quote.schema';
 import { UsersModule } from '../users/users.module';
 import { ClientModule } from '../client/client.module';
 import { FirebaseModule } from '../firebase/firebase.module';
+import { DevicesModule } from '../devices/devices.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { FirebaseModule } from '../firebase/firebase.module';
     UsersModule,
     ClientModule,
     FirebaseModule,
+    DevicesModule,
   ],
   controllers: [QuoteController],
   providers: [QuoteService],
