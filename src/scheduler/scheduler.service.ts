@@ -19,7 +19,8 @@ export class SchedulerService {
 
   // Ejecutar cada minuto para verificar eventos que deben iniciar
   @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'eventNotificationChecker'
+    name: 'eventNotificationChecker',
+    timeZone: 'America/Mexico_City'
   })
   async checkEventNotifications() {
     try {
@@ -145,9 +146,10 @@ export class SchedulerService {
     }
   }
 
-  // Ejecutar todos los días a las 10:00 AM para verificar entregas
+  // Ejecutar todos los días a las 10:00 AM hora de CDMX para verificar entregas
   @Cron('0 10 * * *', {
-    name: 'deliveryNotificationChecker'
+    name: 'deliveryNotificationChecker',
+    timeZone: 'America/Mexico_City'
   })
   async checkDeliveryNotifications() {
     try {
