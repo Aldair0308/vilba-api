@@ -72,7 +72,14 @@ export class QuoteService {
     // Enviar notificación a administradores sobre el cambio de estado
     if (currentQuote.status !== status) {
       console.log(`📢 Status changed from '${currentQuote.status}' to '${status}' - notifying administrators`);
-      await this.sendStatusChangeNotificationToAdmins(quote, currentQuote.status, status, userId);
+      try {
+        await this.sendStatusChangeNotificationToAdmins(quote, currentQuote.status, status, userId);
+        console.log(`✅ Status change notification process completed successfully`);
+      } catch (error) {
+        console.error(`❌ Error in status change notification process:`, error);
+      }
+    } else {
+      console.log(`ℹ️ Status unchanged (${currentQuote.status} → ${status}), no notification needed`);
     }
 
     return quote;
@@ -192,6 +199,9 @@ export class QuoteService {
   ): Promise<void> {
     try {
       console.log(`🔔 Starting status change notification process for quote ID: ${quote._id}`);
+      console.log(`📊 Status change: ${previousStatus} → ${newStatus}`);
+      console.log(`👤 User ID: ${userId || 'not provided'}`);
+      console.log(`📋 Quote name: ${quote.name}`);
       
       // Obtener información del usuario que cambió el estado
       let userName = 'Usuario';

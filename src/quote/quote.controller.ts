@@ -110,4 +110,32 @@ export class QuoteController {
       userId: userId || 'not provided'
     };
   }
+
+  @Get('debug/admin-devices')
+  async debugAdminDevices() {
+    console.log(`🔍 Debugging admin devices...`);
+    
+    // Obtener administradores
+    const admins = await (this.quoteService as any).usersService.findAdmins();
+    console.log(`👥 Found ${admins.length} administrators`);
+    
+    const adminDevices = [];
+    
+    for (const admin of admins) {
+      const devices = await (this.quoteService as any).devicesService.findByUserId(admin._id.toString());
+      adminDevices.push({
+        adminId: admin._id,
+        adminName: admin.name,
+        adminEmail: admin.email,
+        deviceCount: devices.length,
+        devices: devices.map(d => ({ token: d.token.substring(0, 20) + '...', isActive: d.isActive }))
+      });
+    }
+    
+    return {
+      success: true,
+      totalAdmins: admins.length,
+      adminDevices
+    };
+  }
 }
