@@ -135,13 +135,13 @@ export class QuoteService {
       const numEquipment = quote.cranes.length;
       console.log(`🏗️ Number of equipment: ${numEquipment}`);
 
-      // Obtener todos los administradores
-      console.log(`👥 Fetching administrators...`);
+      // Obtener administradores
+      console.log('🔍 Fetching administrators...');
       const admins = await this.usersService.findAdmins();
-      console.log(`👥 Found ${admins.length} administrators`);
+      console.log(`👥 Found ${admins.length} administrators:`, admins.map(a => ({ id: a._id, name: a.name, email: a.email, rol: a.rol })));
 
       if (admins.length === 0) {
-        console.log(`⚠️ No administrators found in the system`);
+        console.log('⚠️ No administrators found, skipping notification');
         return;
       }
 
@@ -245,18 +245,29 @@ export class QuoteService {
         return;
       }
 
-      // Obtener tokens de dispositivos de los administradores
-      const adminIds = admins.map(admin => admin._id.toString());
-      console.log(`📱 Getting device tokens for admin IDs: ${adminIds.join(', ')}`);
-      
-      const allDevices = [];
-      for (const adminId of adminIds) {
-        const userDevices = await this.devicesService.findByUserId(adminId);
-        allDevices.push(...userDevices);
+      // Obtener tokens de dispositivos de todos los administradores
+      console.log('📱 Fetching device tokens for administrators...');
+      const allTokens = [];
+      for (const admin of admins) {
+        console.log(`🔍 Checking devices for admin: ${admin.name} (ID: ${admin._id})`);
+        const devices = await this.devicesService.findByUserId(admin._id.toString());
+        console.log(`📱 Found ${devices.length} devices for ${admin.name}:`, devices.map(d => ({ token: d.token.substring(0, 20) + '...', isActive: d.isActive })));
+        
+        const activeTokens = devices
+          .filter(device => device.isActive)
+          .map(device => device.token);
+        console.log(`✅ Active tokens for ${admin.name}: ${activeTokens.length}`);
+        allTokens.push(...activeTokens);
       }
-      
-      const tokens = allDevices.map(device => device.token);
-       console.log(`📱 Found ${tokens.length} device tokens for administrators`);
+
+      console.log(`📱 Total active device tokens from administrators: ${allTokens.length}`);
+
+      if (allTokens.length === 0) {
+        console.log('⚠️ No active devices found for administrators, skipping notification');
+        return;
+      }
+
+      const tokens = allTokens;
 
       if (tokens.length > 0) {
         // Preparar el mensaje de notificación
@@ -266,8 +277,10 @@ export class QuoteService {
         console.log(`📤 Sending notification to ${tokens.length} devices`);
         console.log(`📝 Title: ${title}`);
         console.log(`📝 Body: ${body}`);
+        console.log(`🔑 Tokens (first 20 chars): ${tokens.map(t => t.substring(0, 20) + '...').join(', ')}`);
 
         try {
+          console.log('🚀 Calling Firebase sendPushToMultiple...');
           const result = await this.firebaseService.sendPushToMultiple(
             tokens,
             title,
@@ -278,10 +291,11 @@ export class QuoteService {
           console.log(`📊 Success: ${result.successCount}, Failures: ${result.failureCount}`);
           
           if (result.failureCount > 0) {
-            console.log(`⚠️ Some notifications failed:`, result.responses.filter(r => !r.success));
+            console.log(`❌ Failed notifications details:`, result.responses.filter(r => !r.success));
           }
         } catch (error) {
           console.error('❌ Error sending status change notifications:', error);
+          throw error;
         }
       } else {
         console.log('⚠️ No device tokens found for administrators');
