@@ -29,6 +29,22 @@ export class Device extends Document {
 
   @Prop({ type: Object, required: false })
   metadata?: Record<string, any>;
+
+  // Admin registration fields
+  @Prop({ required: false })
+  adminId?: string;
+
+  @Prop({ required: false })
+  adminName?: string;
+
+  @Prop({ required: false })
+  adminEmail?: string;
+
+  @Prop({ required: false })
+  adminRole?: string;
+
+  @Prop({ required: false })
+  registeredByAdmin?: boolean;
 }
 
 export const DeviceSchema = SchemaFactory.createForClass(Device);

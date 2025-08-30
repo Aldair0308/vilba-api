@@ -32,6 +32,27 @@ export class CreateDeviceDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+
+  // Admin registration fields
+  @IsString()
+  @IsOptional()
+  adminId?: string;
+
+  @IsString()
+  @IsOptional()
+  adminName?: string;
+
+  @IsString()
+  @IsOptional()
+  adminEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  adminRole?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  registeredByAdmin?: boolean;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
@@ -81,4 +102,25 @@ export class RegisterDeviceDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+
+  // Admin registration fields
+  @IsString()
+  @IsOptional()
+  adminId?: string;
+
+  @IsString()
+  @IsOptional()
+  adminName?: string;
+
+  @IsString()
+  @IsOptional()
+  adminEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  adminRole?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  registeredByAdmin?: boolean;
 }

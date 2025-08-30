@@ -47,6 +47,11 @@ export class DevicesController {
         deviceName,
         appVersion: registerDeviceDto.appVersion,
         isActive: true,
+        adminId: registerDeviceDto.adminId,
+        adminName: registerDeviceDto.adminName,
+        adminEmail: registerDeviceDto.adminEmail,
+        adminRole: registerDeviceDto.adminRole,
+        registeredByAdmin: registerDeviceDto.registeredByAdmin || false,
         metadata: {
           ...registerDeviceDto.metadata,
           deviceInfo: registerDeviceDto.deviceInfo,

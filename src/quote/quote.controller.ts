@@ -127,8 +127,21 @@ export class QuoteController {
         adminId: admin._id,
         adminName: admin.name,
         adminEmail: admin.email,
+        adminRole: admin.rol,
         deviceCount: devices.length,
-        devices: devices.map(d => ({ token: d.token.substring(0, 20) + '...', isActive: d.isActive }))
+        devices: devices.map(d => ({ 
+          token: d.token.substring(0, 20) + '...', 
+          isActive: d.isActive,
+          userId: d.userId,
+          userRole: admin.rol,
+          registeredByAdmin: d.registeredByAdmin || false,
+          adminInfo: d.registeredByAdmin ? {
+            adminId: d.adminId,
+            adminName: d.adminName,
+            adminEmail: d.adminEmail,
+            adminRole: d.adminRole
+          } : null
+        }))
       });
     }
     
@@ -136,6 +149,55 @@ export class QuoteController {
       success: true,
       totalAdmins: admins.length,
       adminDevices
+    };
+  }
+
+  @Get('debug/all-devices')
+  async debugAllDevices() {
+    console.log(`🔍 Debugging all devices...`);
+    
+    // Obtener todos los dispositivos
+    const allDevices = await (this.quoteService as any).devicesService.findAll();
+    console.log(`📱 Found ${allDevices.length} total devices`);
+    
+    const deviceDetails = [];
+    
+    for (const device of allDevices) {
+      // Obtener información del usuario para cada dispositivo
+      const user = await (this.quoteService as any).usersService.findOne(device.userId);
+      deviceDetails.push({
+        deviceId: device._id,
+        token: device.token.substring(0, 20) + '...',
+        isActive: device.isActive,
+        userId: device.userId,
+        userName: user ? user.name : 'Usuario no encontrado',
+        userEmail: user ? user.email : 'Email no encontrado',
+        userRole: user ? user.rol : 'Rol no encontrado',
+        lastSeen: device.lastSeen,
+        createdAt: device.createdAt
+      });
+    }
+    
+    // Separar por roles
+    const adminDevices = deviceDetails.filter(d => d.userRole === 'admin');
+    const userDevices = deviceDetails.filter(d => d.userRole === 'user');
+    const unknownDevices = deviceDetails.filter(d => d.userRole === 'Rol no encontrado');
+    
+    return {
+      success: true,
+      totalDevices: allDevices.length,
+      adminDevices: {
+        count: adminDevices.length,
+        devices: adminDevices
+      },
+      userDevices: {
+        count: userDevices.length,
+        devices: userDevices
+      },
+      unknownDevices: {
+        count: unknownDevices.length,
+        devices: unknownDevices
+      }
     };
   }
 }
