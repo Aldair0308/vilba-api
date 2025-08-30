@@ -6,6 +6,7 @@ import { EventsModule } from '../events/events.module';
 import { DevicesModule } from '../devices/devices.module';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { QuoteModule } from '../quote/quote.module';
+import { CraneModule } from '../crane/crane.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { QuoteModule } from '../quote/quote.module';
     DevicesModule,
     FirebaseModule,
     QuoteModule,
+    CraneModule,
   ],
   controllers: [SchedulerController],
   providers: [SchedulerService],

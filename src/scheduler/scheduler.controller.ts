@@ -7,12 +7,21 @@ export class SchedulerController {
 
   @Post('send-event-notification/:eventId')
   async sendEventNotification(@Param('eventId') eventId: string) {
-    return await this.schedulerService.sendEventNotificationManual(eventId);
+    return this.schedulerService.sendEventNotificationManual(eventId);
   }
 
   @Post('send-event-notification-attendees/:eventId')
   async sendEventNotificationToAttendees(@Param('eventId') eventId: string) {
-    return await this.schedulerService.sendEventNotificationToAttendees(eventId);
+    return this.schedulerService.sendEventNotificationToAttendees(eventId);
+  }
+
+  @Post('test-quote-activation')
+  async testQuoteActivation() {
+    await this.schedulerService.checkQuoteActivation();
+    return {
+      success: true,
+      message: 'Quote activation check executed manually'
+    };
   }
 
   @Get('test')

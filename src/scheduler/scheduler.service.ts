@@ -4,6 +4,7 @@ import { EventsService } from '../events/events.service';
 import { DevicesService } from '../devices/devices.service';
 import { FirebaseService } from '../firebase/firebase.service';
 import { QuoteService } from '../quote/quote.service';
+import { CraneService } from '../crane/crane.service';
 import { EventStatus } from '../events/schemas/event.schema';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class SchedulerService {
     private readonly devicesService: DevicesService,
     private readonly firebaseService: FirebaseService,
     private readonly quoteService: QuoteService,
+    private readonly craneService: CraneService,
   ) {}
 
   // Ejecutar cada minuto para verificar eventos que deben iniciar
@@ -248,6 +250,88 @@ export class SchedulerService {
       
     } catch (error) {
       this.logger.error(`Error sending delivery reminder:`, error);
+    }
+  }
+
+  // Ejecutar cada 20 minutos para verificar fechas de entrega y cambiar estados
+  @Cron('0 */20 * * * *', {
+    name: 'quoteActivationChecker',
+    timeZone: 'America/Mexico_City'
+  })
+  async checkQuoteActivation() {
+    try {
+      this.logger.log('🔄 Checking quote activation based on delivery dates...');
+      
+      // Obtener cotizaciones aprobadas con fechas de entrega
+      const approvedQuotes = await this.quoteService.findByStatus('aproved');
+      
+      if (approvedQuotes.length === 0) {
+        this.logger.log('ℹ️ No approved quotes found');
+        return;
+      }
+
+      const today = new Date();
+      const todayStr = today.toDateString();
+      let quotesActivated = 0;
+      let cranesUpdated = 0;
+      
+      this.logger.log(`📋 Found ${approvedQuotes.length} approved quotes to check`);
+
+      // Revisar cada cotización aprobada
+      for (const quote of approvedQuotes) {
+        if (!quote.cranes || quote.cranes.length === 0) {
+          continue;
+        }
+
+        // Encontrar la fecha de entrega más temprana
+        let earliestDeliveryDate = null;
+        let earliestCrane = null;
+        
+        for (const crane of quote.cranes) {
+          if (crane.fecha_entrega) {
+            const deliveryDate = new Date(crane.fecha_entrega);
+            if (!earliestDeliveryDate || deliveryDate < earliestDeliveryDate) {
+              earliestDeliveryDate = deliveryDate;
+              earliestCrane = crane;
+            }
+          }
+        }
+
+        // Si la fecha de entrega más temprana es hoy, activar la cotización
+        if (earliestDeliveryDate && earliestDeliveryDate.toDateString() === todayStr) {
+          try {
+            this.logger.log(`🎯 Activating quote ${quote._id} - earliest delivery is today`);
+            
+            // Cambiar estado de cotización a 'active'
+            await this.quoteService.switchStatus(quote._id.toString(), 'active');
+            quotesActivated++;
+            
+            // Cambiar estado de todas las grúas de esta cotización a 'en_renta'
+             for (const crane of quote.cranes) {
+               if (crane.crane) {
+                 try {
+                   const craneId = crane.crane.toString();
+                   await this.craneService.update(craneId, { estado: 'en_renta' });
+                   cranesUpdated++;
+                   this.logger.log(`🏗️ Updated crane ${craneId} status to 'en_renta'`);
+                 } catch (craneError) {
+                   this.logger.error(`❌ Error updating crane status:`, craneError);
+                 }
+               }
+             }
+            
+            this.logger.log(`✅ Quote ${quote._id} activated successfully`);
+            
+          } catch (error) {
+            this.logger.error(`❌ Error activating quote ${quote._id}:`, error);
+          }
+        }
+      }
+      
+      this.logger.log(`🎉 Quote activation check completed. Activated ${quotesActivated} quotes, updated ${cranesUpdated} cranes`);
+      
+    } catch (error) {
+      this.logger.error('❌ Error in quote activation checker:', error);
     }
   }
 }
