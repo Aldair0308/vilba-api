@@ -10,5 +10,6 @@ import { Crane, CraneSchema } from './entities/crane.entity';
   ],
   controllers: [CraneController],
   providers: [CraneService],
+  exports: [CraneService],
 })
 export class CraneModule {}
