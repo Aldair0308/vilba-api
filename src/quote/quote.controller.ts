@@ -33,6 +33,11 @@ export class QuoteController {
     return this.quoteService.findByStatus('pending');
   }
 
+  @Get('rented-equipment')
+  async findRentedEquipment() {
+    return this.quoteService.findRentedEquipment();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.quoteService.findOne(id);

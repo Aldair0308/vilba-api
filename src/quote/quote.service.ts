@@ -107,6 +107,72 @@ export class QuoteService {
       .exec();
   }
 
+  async findRentedEquipment(): Promise<any[]> {
+    try {
+      // Obtener cotizaciones activas con equipos entregados
+      const activeQuotes = await this.quoteModel
+        .find({
+          status: 'active',
+          'cranes.entregado': true,
+          'cranes.fecha_entrega': { $exists: true, $ne: null }
+        })
+        .populate('cranes.crane')
+        .populate('clientId')
+        .exec();
+
+      const rentedEquipment = [];
+      const now = new Date();
+      
+      // Configurar zona horaria de CDMX
+      const cdmxTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
+
+      for (const quote of activeQuotes) {
+        for (const crane of quote.cranes) {
+          // Solo incluir equipos que están entregados
+          if (crane.entregado && crane.fecha_entrega) {
+            const deliveryDate = new Date(crane.fecha_entrega);
+            const rentalDays = crane.dias;
+            
+            // Calcular fecha de finalización de renta (fecha_entrega + días de renta)
+            const rentalEndDate = new Date(deliveryDate);
+            rentalEndDate.setDate(rentalEndDate.getDate() + rentalDays);
+            
+            // Calcular horas restantes
+            const timeDifference = rentalEndDate.getTime() - cdmxTime.getTime();
+            const hoursRemaining = Math.max(0, Math.round(timeDifference / (1000 * 60 * 60)));
+            
+            // Obtener información del equipo
+            const equipmentInfo = crane.crane as any;
+            
+            rentedEquipment.push({
+              quoteId: quote._id,
+              quoteName: quote.name,
+              clientName: quote.clientId?.name || 'Cliente no disponible',
+              equipmentId: crane.crane,
+              equipmentName: equipmentInfo?.nombre || 'Nombre no disponible',
+              equipmentBrand: equipmentInfo?.marca || 'Marca no disponible',
+              equipmentModel: equipmentInfo?.modelo || 'Modelo no disponible',
+              deliveryDate: crane.fecha_entrega,
+              rentalDays: crane.dias,
+              rentalEndDate: rentalEndDate,
+              hoursRemaining: hoursRemaining,
+              price: crane.precio,
+              delivered: crane.entregado,
+              status: hoursRemaining > 0 ? 'active' : 'expired'
+            });
+          }
+        }
+      }
+
+      // Ordenar por horas restantes (menor a mayor)
+      return rentedEquipment.sort((a, b) => a.hoursRemaining - b.hoursRemaining);
+      
+    } catch (error) {
+      console.error('Error finding rented equipment:', error);
+      throw error;
+    }
+  }
+
   private async sendApprovalNotification(quote: Quote, userId?: string): Promise<void> {
     try {
       console.log(`🔔 Starting approval notification process for quote ID: ${quote._id}`);
