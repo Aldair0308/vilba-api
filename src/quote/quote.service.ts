@@ -109,10 +109,10 @@ export class QuoteService {
 
   async findRentedEquipment(): Promise<any[]> {
     try {
-      // Obtener cotizaciones activas con equipos entregados
+      // Obtener cotizaciones activas y aprobadas con equipos entregados
       const activeQuotes = await this.quoteModel
         .find({
-          status: 'active',
+          status: { $in: ['active', 'aproved'] },
           'cranes.entregado': true,
           'cranes.fecha_entrega': { $exists: true, $ne: null }
         })
