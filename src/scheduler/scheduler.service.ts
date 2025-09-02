@@ -292,8 +292,8 @@ export class SchedulerService {
     }
   }
 
-  // Ejecutar cada 20 minutos para verificar fechas de entrega y cambiar estados
-  @Cron('0 */20 * * * *', {
+  // Ejecutar cada 5 minutos para verificar fechas de entrega y cambiar estados
+  @Cron('0 */5 * * * *', {
     name: 'quoteActivationChecker',
     timeZone: 'America/Mexico_City',
   })
