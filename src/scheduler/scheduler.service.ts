@@ -292,8 +292,8 @@ export class SchedulerService {
     }
   }
 
-  // Ejecutar cada 5 minutos para verificar fechas de entrega y cambiar estados
-  @Cron('0 */5 * * * *', {
+  // Ejecutar cada 30 minutos para verificar fechas de entrega y cambiar estados
+  @Cron('0 */30 * * * *', {
     name: 'quoteActivationChecker',
     timeZone: 'America/Mexico_City',
   })
@@ -357,30 +357,35 @@ export class SchedulerService {
             );
             quotesActivated++;
 
-            // Cambiar estado de todas las grúas de esta cotización a 'en_renta'
-            for (const crane of quote.cranes) {
-              if (crane.crane) {
-                try {
-                  const craneId = crane.crane.toString();
-                  await this.craneService.update(craneId, {
-                    estado: 'en_renta',
-                  });
-                  cranesUpdated++;
-                  this.logger.log(
-                    `🏗️ Updated crane ${craneId} status to 'en_renta'`,
-                  );
-                } catch (craneError) {
-                  this.logger.error(
-                    `❌ Error updating crane status:`,
-                    craneError,
-                  );
-                }
-              }
-            }
-
             this.logger.log(`✅ Quote ${quote._id} activated successfully`);
           } catch (error) {
             this.logger.error(`❌ Error activating quote ${quote._id}:`, error);
+          }
+        }
+
+        // Verificar cada grúa individualmente para cambiar a 'en_renta'
+        for (const crane of quote.cranes) {
+          if (crane.crane && crane.fecha_entrega && crane.entregado === true) {
+            const deliveryDate = new Date(crane.fecha_entrega);
+            
+            // Si la fecha de entrega de esta grúa es hoy y está marcada como entregada
+            if (deliveryDate.toDateString() === todayStr) {
+              try {
+                const craneId = crane.crane.toString();
+                await this.craneService.update(craneId, {
+                  estado: 'en_renta',
+                });
+                cranesUpdated++;
+                this.logger.log(
+                  `🏗️ Updated crane ${craneId} status to 'en_renta' - delivered today`,
+                );
+              } catch (craneError) {
+                this.logger.error(
+                  `❌ Error updating crane status:`,
+                  craneError,
+                );
+              }
+            }
           }
         }
       }
