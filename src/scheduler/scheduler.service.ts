@@ -303,11 +303,13 @@ export class SchedulerService {
         '🔄 Checking quote activation based on delivery dates...',
       );
 
-      // Obtener cotizaciones aprobadas con fechas de entrega
+      // Obtener cotizaciones aprobadas Y activas con fechas de entrega
       const approvedQuotes = await this.quoteService.findByStatus('aproved');
+      const activeQuotes = await this.quoteService.findByStatus('active');
+      const allQuotes = [...approvedQuotes, ...activeQuotes];
 
-      if (approvedQuotes.length === 0) {
-        this.logger.log('ℹ️ No approved quotes found');
+      if (allQuotes.length === 0) {
+        this.logger.log('ℹ️ No approved or active quotes found');
         return;
       }
 
@@ -317,11 +319,11 @@ export class SchedulerService {
       let cranesUpdated = 0;
 
       this.logger.log(
-        `📋 Found ${approvedQuotes.length} approved quotes to check`,
+        `📋 Found ${approvedQuotes.length} approved and ${activeQuotes.length} active quotes to check`,
       );
 
-      // Revisar cada cotización aprobada
-      for (const quote of approvedQuotes) {
+      // Revisar cada cotización (aprobada o activa)
+      for (const quote of allQuotes) {
         if (!quote.cranes || quote.cranes.length === 0) {
           continue;
         }
@@ -340,10 +342,11 @@ export class SchedulerService {
           }
         }
 
-        // Si la fecha de entrega más temprana es hoy, activar la cotización
+        // Si la fecha de entrega más temprana es hoy Y la cotización está aprobada, activarla
         if (
           earliestDeliveryDate &&
-          earliestDeliveryDate.toDateString() === todayStr
+          earliestDeliveryDate.toDateString() === todayStr &&
+          quote.status === 'aproved'
         ) {
           try {
             this.logger.log(
