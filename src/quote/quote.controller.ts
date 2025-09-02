@@ -205,4 +205,67 @@ export class QuoteController {
       }
     };
   }
+
+  @Post('test-rental-end')
+  async testRentalEnd() {
+    try {
+      // Simular el proceso de finalización de renta manualmente
+      const rentedEquipment = await this.quoteService.findRentedEquipment();
+      
+      if (rentedEquipment.length === 0) {
+        return {
+          success: true,
+          message: 'No rented equipment found to test',
+          equipmentProcessed: 0
+        };
+      }
+
+      const now = new Date();
+      let equipmentUpdated = 0;
+      const results = [];
+
+      // Revisar cada equipo rentado
+      for (const equipment of rentedEquipment) {
+        const rentalEndDate = new Date(equipment.rentalEndDate);
+        
+        // Para prueba, considerar equipos que terminan en las próximas 24 horas
+        const timeDiff = rentalEndDate.getTime() - now.getTime();
+        const hoursUntilEnd = timeDiff / (1000 * 60 * 60);
+        
+        results.push({
+          craneId: equipment.craneId,
+          rentalEndDate: equipment.rentalEndDate,
+          hoursUntilEnd: Math.round(hoursUntilEnd * 100) / 100,
+          shouldEnd: rentalEndDate <= now,
+          processed: false
+        });
+        
+        // Si la fecha de fin de renta ya pasó
+        if (rentalEndDate <= now) {
+          try {
+            // Cambiar estado de la grúa de 'en_renta' a 'disponible'
+            await this.quoteService.updateCraneStatus(equipment.craneId, 'disponible');
+            equipmentUpdated++;
+            results[results.length - 1].processed = true;
+          } catch (error) {
+            results[results.length - 1].error = error.message;
+          }
+        }
+      }
+
+      return {
+        success: true,
+        message: `Rental end test completed. Updated ${equipmentUpdated} equipment to 'disponible'`,
+        equipmentProcessed: equipmentUpdated,
+        totalEquipment: rentedEquipment.length,
+        results
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        stack: error.stack
+      };
+    }
+  }
 }

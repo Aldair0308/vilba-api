@@ -30,7 +30,8 @@ GET /quote/rented-equipment
     "equipmentModel": "280 EC-H",
     "deliveryDate": "2025-08-31T16:18:00.000Z",
     "rentalDays": 7,
-    "rentalEndDate": "2025-09-07T16:18:00.000Z",
+    "rentalStartDate": "2025-08-31T00:00:00.000Z",
+    "rentalEndDate": "2025-09-07T00:00:00.000Z",
     "hoursRemaining": 168,
     "price": 7500,
     "delivered": true,
@@ -52,7 +53,8 @@ GET /quote/rented-equipment
 | `equipmentModel` | string | Modelo del equipo |
 | `deliveryDate` | Date | Fecha de entrega del equipo |
 | `rentalDays` | number | Días contratados de renta |
-| `rentalEndDate` | Date | Fecha calculada de fin de renta |
+| `rentalStartDate` | Date | Fecha de inicio de renta (12:00 AM del día de entrega) |
+| `rentalEndDate` | Date | Fecha calculada de fin de renta (12:00 AM del día correspondiente) |
 | `hoursRemaining` | number | Horas restantes hasta el fin de la renta |
 | `price` | number | Precio de la renta |
 | `delivered` | boolean | Estado de entrega (siempre true en este endpoint) |
@@ -60,9 +62,14 @@ GET /quote/rented-equipment
 
 ## Lógica de Cálculo
 
+### Fecha de Inicio de Renta
+```
+fecha_inicio_renta = fecha_entrega a las 12:00 AM (medianoche)
+```
+
 ### Fecha de Finalización
 ```
-fecha_fin_renta = fecha_entrega + dias_renta
+fecha_fin_renta = fecha_inicio_renta + dias_renta a las 12:00 AM (medianoche)
 ```
 
 ### Horas Restantes
@@ -70,8 +77,11 @@ fecha_fin_renta = fecha_entrega + dias_renta
 horas_restantes = (fecha_fin_renta - hora_actual_cdmx) / 3600000
 ```
 
+- La renta inicia a las 12:00 AM (medianoche) del día de entrega
+- La renta termina a las 12:00 AM (medianoche) del día correspondiente
 - Si el resultado es negativo, se retorna 0
 - El resultado se redondea al entero más cercano
+- Ejemplo: Si se renta 2 días el martes, termina a las 12:00 AM del jueves
 
 ## Ordenamiento
 Los resultados se ordenan por horas restantes de menor a mayor, priorizando los equipos que están próximos a vencer.

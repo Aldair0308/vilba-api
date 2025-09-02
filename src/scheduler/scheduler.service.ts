@@ -400,4 +400,67 @@ export class SchedulerService {
       this.logger.error('❌ Error in quote activation checker:', error);
     }
   }
+
+  // Ejecutar cada hora para verificar equipos que deben cambiar de 'en_renta' a 'disponible'
+  @Cron('0 0 * * * *', {
+    name: 'rentalEndChecker',
+    timeZone: 'America/Mexico_City',
+  })
+  async checkRentalEnd() {
+    try {
+      this.logger.log(
+        '🔄 Checking for equipment that should end rental period...',
+      );
+
+      // Obtener equipos rentados usando el método existente
+      const rentedEquipment = await this.quoteService.findRentedEquipment();
+
+      if (rentedEquipment.length === 0) {
+        this.logger.log('ℹ️ No rented equipment found');
+        return;
+      }
+
+      const now = new Date();
+      let equipmentUpdated = 0;
+
+      this.logger.log(
+        `📋 Found ${rentedEquipment.length} rented equipment to check`,
+      );
+
+      // Revisar cada equipo rentado
+      for (const equipment of rentedEquipment) {
+        const rentalEndDate = new Date(equipment.rentalEndDate);
+        
+        // Si la fecha de fin de renta ya pasó (es menor o igual a la hora actual)
+        if (rentalEndDate <= now) {
+          try {
+            this.logger.log(
+              `🏗️ Ending rental for crane ${equipment.craneId} - rental period expired`,
+            );
+
+            // Cambiar estado de la grúa de 'en_renta' a 'disponible'
+            await this.craneService.update(equipment.craneId, {
+              estado: 'disponible',
+            });
+            equipmentUpdated++;
+
+            this.logger.log(
+              `✅ Crane ${equipment.craneId} status updated to 'disponible' - rental ended`,
+            );
+          } catch (error) {
+            this.logger.error(
+              `❌ Error updating crane ${equipment.craneId} status:`,
+              error,
+            );
+          }
+        }
+      }
+
+      this.logger.log(
+        `🎉 Rental end check completed. Updated ${equipmentUpdated} equipment to 'disponible'`,
+      );
+    } catch (error) {
+      this.logger.error('❌ Error in rental end checker:', error);
+    }
+  }
 }
