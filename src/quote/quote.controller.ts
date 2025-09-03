@@ -268,4 +268,94 @@ export class QuoteController {
       };
     }
   }
+
+  @Post('test-return-events')
+  async testReturnEvents() {
+    try {
+      // Simular el proceso de creación de eventos de devolución manualmente
+      const approvedQuotes = await this.quoteService.findByStatus('aproved');
+      const activeQuotes = await this.quoteService.findByStatus('active');
+      const allQuotes = [...approvedQuotes, ...activeQuotes];
+
+      if (allQuotes.length === 0) {
+        return {
+          success: true,
+          message: 'No approved or active quotes found to test',
+          eventsCreated: 0
+        };
+      }
+
+      let eventsCreated = 0;
+      const results = [];
+
+      // Revisar cada cotización
+      for (const quote of allQuotes) {
+        if (!quote.cranes || quote.cranes.length === 0) {
+          continue;
+        }
+
+        // Verificar cada grúa en la cotización
+        for (const crane of quote.cranes) {
+          // Solo procesar grúas que están entregadas y tienen fecha de entrega
+          if (crane.entregado === true && crane.fecha_entrega && crane.crane) {
+            try {
+              // Calcular fecha de devolución basada en la lógica de renta
+              const deliveryDate = new Date(crane.fecha_entrega);
+              const rentalDays = crane.dias || 1;
+              
+              // Fecha de inicio de renta: 12:00 AM del día de entrega
+              const rentalStartDate = new Date(deliveryDate);
+              rentalStartDate.setUTCHours(6, 0, 0, 0); // 12:00 AM México = 06:00 UTC
+              
+              // Fecha de fin de renta: 12:00 AM del día después del período de renta
+              const returnDate = new Date(rentalStartDate);
+              returnDate.setDate(returnDate.getDate() + rentalDays);
+
+              // Obtener información del cliente
+              const client = quote.clientId as any;
+              const clientName = client?.name || 'Cliente desconocido';
+              
+              // Obtener información del equipo
+              const equipmentInfo = crane.crane as any;
+              const equipmentName = equipmentInfo?.nombre || 'Equipo';
+              const equipmentModel = equipmentInfo?.modelo || 'N/A';
+
+              results.push({
+                quoteId: quote._id,
+                quoteName: quote.name,
+                clientName,
+                equipmentName,
+                equipmentModel,
+                deliveryDate: crane.fecha_entrega,
+                rentalDays,
+                returnDate,
+                eventWouldBeCreated: true
+              });
+
+              eventsCreated++;
+            } catch (error) {
+              results.push({
+                quoteId: quote._id,
+                error: error.message
+              });
+            }
+          }
+        }
+      }
+
+      return {
+        success: true,
+        message: `Return events test completed. Would create ${eventsCreated} events`,
+        eventsCreated,
+        totalQuotes: allQuotes.length,
+        results
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        stack: error.stack
+      };
+    }
+  }
 }

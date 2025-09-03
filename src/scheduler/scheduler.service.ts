@@ -463,4 +463,117 @@ export class SchedulerService {
       this.logger.error('❌ Error in rental end checker:', error);
     }
   }
+
+  // Ejecutar cada 30 minutos para crear eventos de devolución de equipos
+  @Cron('0 */30 * * * *', {
+    name: 'equipmentReturnEventCreator',
+    timeZone: 'America/Mexico_City',
+  })
+  async createEquipmentReturnEvents() {
+    try {
+      this.logger.log(
+        '🔄 Checking for delivered equipment that needs return events...',
+      );
+
+      // Obtener cotizaciones aprobadas y activas
+      const approvedQuotes = await this.quoteService.findByStatus('aproved');
+      const activeQuotes = await this.quoteService.findByStatus('active');
+      const allQuotes = [...approvedQuotes, ...activeQuotes];
+
+      if (allQuotes.length === 0) {
+        this.logger.log('ℹ️ No approved or active quotes found');
+        return;
+      }
+
+      let eventsCreated = 0;
+
+      this.logger.log(
+        `📋 Found ${allQuotes.length} quotes to check for equipment return events`,
+      );
+
+      // Revisar cada cotización
+      for (const quote of allQuotes) {
+        if (!quote.cranes || quote.cranes.length === 0) {
+          continue;
+        }
+
+        // Verificar cada grúa en la cotización
+        for (const crane of quote.cranes) {
+          // Solo procesar grúas que están entregadas y tienen fecha de entrega
+          if (crane.entregado === true && crane.fecha_entrega && crane.crane) {
+            try {
+              // Calcular fecha de devolución basada en la lógica de renta
+              const deliveryDate = new Date(crane.fecha_entrega);
+              const rentalDays = crane.dias || 1;
+              
+              // Fecha de inicio de renta: 12:00 AM del día de entrega
+              const rentalStartDate = new Date(deliveryDate);
+              rentalStartDate.setUTCHours(6, 0, 0, 0); // 12:00 AM México = 06:00 UTC
+              
+              // Fecha de fin de renta: 12:00 AM del día después del período de renta
+              const returnDate = new Date(rentalStartDate);
+              returnDate.setDate(returnDate.getDate() + rentalDays);
+
+              // Verificar si ya existe un evento para esta devolución
+              const existingEvent = await this.eventsService.findByDateRange(
+                new Date(returnDate.getTime() - 24 * 60 * 60 * 1000), // 1 día antes
+                new Date(returnDate.getTime() + 24 * 60 * 60 * 1000), // 1 día después
+              );
+
+              const eventExists = existingEvent.some(event => 
+                event.description.includes(crane.crane.toString()) &&
+                event.title.includes('Devolución de equipo')
+              );
+
+              if (!eventExists) {
+                // Obtener información del cliente
+                const client = quote.clientId as any;
+                const clientName = client?.name || 'Cliente desconocido';
+                
+                // Obtener información del equipo
+                const equipmentInfo = crane.crane as any;
+                const equipmentName = equipmentInfo?.nombre || 'Equipo';
+                const equipmentModel = equipmentInfo?.modelo || 'N/A';
+
+                // Crear evento de devolución
+                const eventTitle = `Devolución de equipo - ${clientName}`;
+                const eventDescription = `El cliente ${clientName} debe devolver el equipo ${equipmentName} (${equipmentModel}). Cotización: ${quote.name || quote._id}. Días de renta: ${rentalDays}.`;
+
+                await this.eventsService.createEvent(
+                  eventTitle,
+                  eventDescription,
+                  returnDate,
+                  'system', // userId del sistema
+                  'Sistema Automático', // userName
+                  'other', // type
+                  {
+                    location: 'Por definir',
+                    reminderMinutes: 60, // Recordatorio 1 hora antes
+                    allDay: false,
+                    color: '#ff9800' // Color naranja para eventos de devolución
+                  }
+                );
+
+                eventsCreated++;
+                this.logger.log(
+                  `📅 Created return event for equipment ${equipmentName} - client: ${clientName}, return date: ${returnDate.toISOString()}`,
+                );
+              }
+            } catch (error) {
+              this.logger.error(
+                `❌ Error creating return event for crane ${crane.crane}:`,
+                error,
+              );
+            }
+          }
+        }
+      }
+
+      this.logger.log(
+        `🎉 Equipment return event creation completed. Created ${eventsCreated} new events`,
+      );
+    } catch (error) {
+      this.logger.error('❌ Error in equipment return event creator:', error);
+    }
+  }
 }
