@@ -543,11 +543,12 @@ export class SchedulerService {
                   eventTitle,
                   eventDescription,
                   returnDate,
-                  'system', // userId del sistema
+                  '000000000000000000000000', // userId del sistema (ObjectId válido)
                   'Sistema Automático', // userName
                   'other', // type
                   {
                     location: 'Por definir',
+                    notes: `Evento generado automáticamente para la devolución de equipo. Cotización: ${quote.name || quote._id}`,
                     reminderMinutes: 60, // Recordatorio 1 hora antes
                     allDay: false,
                     color: '#ff9800' // Color naranja para eventos de devolución
