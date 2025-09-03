@@ -464,8 +464,8 @@ export class SchedulerService {
     }
   }
 
-  // Ejecutar cada 30 minutos para crear eventos de devolución de equipos
-  @Cron('0 */30 * * * *', {
+  // Ejecutar todos los días a las 10:00 AM para crear eventos de devolución de equipos
+  @Cron('0 10 * * *', {
     name: 'equipmentReturnEventCreator',
     timeZone: 'America/Mexico_City',
   })
@@ -536,8 +536,8 @@ export class SchedulerService {
                 const equipmentModel = equipmentInfo?.modelo || 'N/A';
 
                 // Crear evento de devolución
-                const eventTitle = `Devolución de equipo - ${clientName}`;
-                const eventDescription = `El cliente ${clientName} debe devolver el equipo ${equipmentName} (${equipmentModel}). Cotización: ${quote.name || quote._id}. Días de renta: ${rentalDays}.`;
+                const eventTitle = `Recordatorio: Devolución de equipo ${equipmentName}`;
+                const eventDescription = `El cliente ${clientName} debe devolver el equipo ${equipmentName}`;
 
                 // Obtener un administrador para usar como userId
                 const admins = await this.quoteService['usersService'].findAdmins();
