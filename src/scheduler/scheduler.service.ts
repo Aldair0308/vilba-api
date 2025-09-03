@@ -539,19 +539,29 @@ export class SchedulerService {
                 const eventTitle = `Devolución de equipo - ${clientName}`;
                 const eventDescription = `El cliente ${clientName} debe devolver el equipo ${equipmentName} (${equipmentModel}). Cotización: ${quote.name || quote._id}. Días de renta: ${rentalDays}.`;
 
+                // Obtener un administrador para usar como userId
+                const admins = await this.quoteService['usersService'].findAdmins();
+                let systemUserId = '000000000000000000000000';
+                let systemUserName = 'Sistema Automático';
+                
+                if (admins && admins.length > 0) {
+                  systemUserId = admins[0]._id.toString();
+                  systemUserName = admins[0].name;
+                }
+
                 await this.eventsService.createEvent(
                   eventTitle,
                   eventDescription,
                   returnDate,
-                  '000000000000000000000000', // userId del sistema (ObjectId válido)
-                  'Sistema Automático', // userName
-                  'other', // type
+                  systemUserId, // userId de administrador real
+                  systemUserName, // userName de administrador real
+                  'service', // type cambiado a 'service'
                   {
-                    location: 'Por definir',
-                    notes: `Evento generado automáticamente para la devolución de equipo. Cotización: ${quote.name || quote._id}`,
-                    reminderMinutes: 60, // Recordatorio 1 hora antes
+                    location: '',
+                    notes: '',
+                    reminderMinutes: 15, // Recordatorio 15 minutos antes
                     allDay: false,
-                    color: '#ff9800' // Color naranja para eventos de devolución
+                    color: '#4CAF50' // Color verde como en el ejemplo
                   }
                 );
 
