@@ -52,7 +52,7 @@ export class QuoteController {
     @Param('id') id: string, 
     @Param('status') status: string,
     @Query('userId') userId?: string,
-    @Query() allParams: any
+    @Query() allParams?: any
   ) {
     console.log(`🔍 Switch status - Received userId:`, userId);
     console.log(`🔍 Switch status - All query parameters:`, allParams);
@@ -87,7 +87,7 @@ export class QuoteController {
   }
 
   @Post(':id/test-notification')
-  async testApprovalNotification(@Param('id') id: string, @Query('userId') userId?: string, @Query() allParams: any) {
+  async testApprovalNotification(@Param('id') id: string, @Query('userId') userId?: string, @Query() allParams?: any) {
     console.log(`🧪 Testing approval notification for quote ${id}`);
     console.log(`🔍 Received userId parameter:`, userId);
     console.log(`🔍 All query parameters:`, allParams);
