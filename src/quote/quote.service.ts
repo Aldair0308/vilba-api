@@ -237,6 +237,43 @@ export class QuoteService {
           console.error(`❌ Error getting tokens for admin ${admin.email}:`, error);
         }
       }
+      
+      // Si no se encontraron tokens para administradores, buscar dispositivos huérfanos
+      if (adminTokens.length === 0) {
+        console.log(`🔍 No tokens found for current admins, checking for orphaned devices...`);
+        try {
+          const allDevices = await this.devicesService.findAll();
+          console.log(`📱 Found ${allDevices.length} total devices in system`);
+          
+          for (const device of allDevices) {
+            if (device.isActive) {
+              try {
+                // Verificar si el usuario del dispositivo existe
+                const deviceUser = await this.usersService.findOne(device.userId);
+                if (!deviceUser) {
+                  console.log(`🔄 Found orphaned device ${device._id}, reassigning to admin ${admins[0].email}`);
+                  // Reasignar dispositivo al primer administrador
+                  await this.devicesService.update(device._id.toString(), {
+                    userId: admins[0]._id.toString()
+                  });
+                  adminTokens.push(device.token);
+                  console.log(`✅ Reassigned orphaned device token to admin`);
+                }
+              } catch (userError) {
+                console.log(`🔄 Device ${device._id} has invalid user, reassigning to admin ${admins[0].email}`);
+                // Reasignar dispositivo al primer administrador
+                await this.devicesService.update(device._id.toString(), {
+                  userId: admins[0]._id.toString()
+                });
+                adminTokens.push(device.token);
+                console.log(`✅ Reassigned orphaned device token to admin`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Error checking for orphaned devices:`, error);
+        }
+      }
 
       console.log(`📱 Total admin tokens collected: ${adminTokens.length}`);
       
@@ -337,6 +374,43 @@ export class QuoteService {
 
       console.log(`📱 Total active device tokens from administrators: ${allTokens.length}`);
 
+      // Si no se encontraron tokens para administradores, buscar dispositivos huérfanos
+      if (allTokens.length === 0) {
+        console.log(`🔍 No tokens found for current admins, checking for orphaned devices...`);
+        try {
+          const allDevices = await this.devicesService.findAll();
+          console.log(`📱 Found ${allDevices.length} total devices in system`);
+          
+          for (const device of allDevices) {
+            if (device.isActive) {
+              try {
+                // Verificar si el usuario del dispositivo existe
+                const deviceUser = await this.usersService.findOne(device.userId);
+                if (!deviceUser) {
+                  console.log(`🔄 Found orphaned device ${device._id}, reassigning to admin ${admins[0].email}`);
+                  // Reasignar dispositivo al primer administrador
+                  await this.devicesService.update(device._id.toString(), {
+                    userId: admins[0]._id.toString()
+                  });
+                  allTokens.push(device.token);
+                  console.log(`✅ Reassigned orphaned device token to admin`);
+                }
+              } catch (userError) {
+                console.log(`🔄 Device ${device._id} has invalid user, reassigning to admin ${admins[0].email}`);
+                // Reasignar dispositivo al primer administrador
+                await this.devicesService.update(device._id.toString(), {
+                  userId: admins[0]._id.toString()
+                });
+                allTokens.push(device.token);
+                console.log(`✅ Reassigned orphaned device token to admin`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Error checking for orphaned devices:`, error);
+        }
+      }
+      
       if (allTokens.length === 0) {
         console.log('⚠️ No active devices found for administrators, skipping notification');
         return;

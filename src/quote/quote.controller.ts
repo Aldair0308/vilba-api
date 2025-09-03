@@ -51,8 +51,13 @@ export class QuoteController {
   async switchStatus(
     @Param('id') id: string, 
     @Param('status') status: string,
-    @Query('userId') userId?: string
+    @Query('userId') userId?: string,
+    @Query() allParams: any
   ) {
+    console.log(`🔍 Switch status - Received userId:`, userId);
+    console.log(`🔍 Switch status - All query parameters:`, allParams);
+    console.log(`🔍 Switch status - Type of userId:`, typeof userId);
+    
     // Validar que el status sea uno de los permitidos
     const validStatuses = [
       'pending',
@@ -82,8 +87,12 @@ export class QuoteController {
   }
 
   @Post(':id/test-notification')
-  async testApprovalNotification(@Param('id') id: string, @Query('userId') userId?: string) {
+  async testApprovalNotification(@Param('id') id: string, @Query('userId') userId?: string, @Query() allParams: any) {
     console.log(`🧪 Testing approval notification for quote ${id}`);
+    console.log(`🔍 Received userId parameter:`, userId);
+    console.log(`🔍 All query parameters:`, allParams);
+    console.log(`🔍 Type of userId:`, typeof userId);
+    
     const quote = await this.quoteService.findOne(id);
     
     // Llamar directamente al método de notificación para pruebas
@@ -93,7 +102,9 @@ export class QuoteController {
       success: true,
       message: `Test notification sent for quote ${id}`,
       quoteId: id,
-      userId: userId || 'not provided'
+      userId: userId || 'not provided',
+      allQueryParams: allParams,
+      userIdType: typeof userId
     };
   }
 
@@ -117,6 +128,31 @@ export class QuoteController {
       previousStatus,
       newStatus,
       userId: userId || 'not provided'
+    };
+  }
+
+  @Post(':id/test-notification-body')
+  async testApprovalNotificationWithBody(
+    @Param('id') id: string, 
+    @Body() body: { userId?: string }
+  ) {
+    console.log(`🧪 Testing approval notification with body for quote ${id}`);
+    console.log(`🔍 Received body:`, body);
+    console.log(`🔍 Body userId:`, body.userId);
+    console.log(`🔍 Type of body userId:`, typeof body.userId);
+    
+    const quote = await this.quoteService.findOne(id);
+    
+    // Llamar directamente al método de notificación para pruebas
+    await (this.quoteService as any).sendApprovalNotification(quote, body.userId);
+    
+    return {
+      success: true,
+      message: `Test notification sent for quote ${id} (using body)`,
+      quoteId: id,
+      userId: body.userId || 'not provided',
+      receivedBody: body,
+      userIdType: typeof body.userId
     };
   }
 
@@ -421,4 +457,6 @@ export class QuoteController {
       };
     }
   }
+
+
 }
