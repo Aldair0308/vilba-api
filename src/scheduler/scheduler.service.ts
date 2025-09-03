@@ -532,8 +532,13 @@ export class SchedulerService {
                 
                 // Obtener información del equipo
                 const equipmentInfo = crane.crane as any;
-                const equipmentName = equipmentInfo?.nombre || 'Equipo';
-                const equipmentModel = equipmentInfo?.modelo || 'N/A';
+                let equipmentName = equipmentInfo?.nombre || 'Equipo';
+                
+                // Limpiar el nombre del equipo eliminando información adicional
+                // Eliminar texto entre paréntesis como (N/A), (500), etc.
+                equipmentName = equipmentName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+                // Eliminar espacios extra al final
+                equipmentName = equipmentName.replace(/\s+$/, '');
 
                 // Crear evento de devolución
                 const eventTitle = `Recordatorio: Devolución de equipo ${equipmentName}`;
