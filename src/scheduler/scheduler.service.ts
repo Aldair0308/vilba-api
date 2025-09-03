@@ -514,31 +514,30 @@ export class SchedulerService {
               const returnDate = new Date(rentalStartDate);
               returnDate.setDate(returnDate.getDate() + rentalDays);
 
-              // Verificar si ya existe un evento para esta devolución
+              // Verificar si ya existe un evento para esta devolución específica
               const existingEvent = await this.eventsService.findByDateRange(
                 new Date(returnDate.getTime() - 24 * 60 * 60 * 1000), // 1 día antes
                 new Date(returnDate.getTime() + 24 * 60 * 60 * 1000), // 1 día después
               );
 
+              // Obtener información del equipo para verificación más precisa
+              const equipmentInfo = crane.crane as any;
+              let equipmentName = equipmentInfo?.nombre || 'Equipo';
+              
+              // Limpiar el nombre del equipo para comparación
+              equipmentName = equipmentName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+              equipmentName = equipmentName.replace(/\s+$/, '');
+
               const eventExists = existingEvent.some(event => 
-                event.description.includes(crane.crane.toString()) &&
-                event.title.includes('Devolución de equipo')
+                event.description.includes(equipmentName) &&
+                event.title.includes('Devolución de equipo') &&
+                event.title.includes(equipmentName)
               );
 
               if (!eventExists) {
                 // Obtener información del cliente
                 const client = quote.clientId as any;
                 const clientName = client?.name || 'Cliente desconocido';
-                
-                // Obtener información del equipo
-                const equipmentInfo = crane.crane as any;
-                let equipmentName = equipmentInfo?.nombre || 'Equipo';
-                
-                // Limpiar el nombre del equipo eliminando información adicional
-                // Eliminar texto entre paréntesis como (N/A), (500), etc.
-                equipmentName = equipmentName.replace(/\s*\([^)]*\)\s*/g, '').trim();
-                // Eliminar espacios extra al final
-                equipmentName = equipmentName.replace(/\s+$/, '');
 
                 // Crear evento de devolución
                 const eventTitle = `Recordatorio: Devolución de equipo ${equipmentName}`;

@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 import { ClientModule } from '../client/client.module';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { DevicesModule } from '../devices/devices.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DevicesModule } from '../devices/devices.module';
     ClientModule,
     FirebaseModule,
     DevicesModule,
+    EventsModule,
   ],
   controllers: [QuoteController],
   providers: [QuoteService],

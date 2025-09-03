@@ -13,10 +13,14 @@ import {
 import { QuoteService } from './quote.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
+import { EventsService } from '../events/events.service';
 
 @Controller('quote')
 export class QuoteController {
-  constructor(private readonly quoteService: QuoteService) {}
+  constructor(
+    private readonly quoteService: QuoteService,
+    private readonly eventsService: EventsService
+  ) {}
 
   @Post()
   create(@Body() createQuoteDto: CreateQuoteDto) {
@@ -270,8 +274,11 @@ export class QuoteController {
   }
 
   @Post('test-return-events')
-  async testReturnEvents() {
+  async testReturnEvents(@Query('createReal') createReal?: string) {
+    const shouldCreateReal = createReal === 'true';
     try {
+      // Usar EventsService inyectado para verificar eventos existentes
+      
       // Simular el proceso de creación de eventos de devolución manualmente
       const approvedQuotes = await this.quoteService.findByStatus('aproved');
       const activeQuotes = await this.quoteService.findByStatus('active');
@@ -311,15 +318,67 @@ export class QuoteController {
               const returnDate = new Date(rentalStartDate);
               returnDate.setDate(returnDate.getDate() + rentalDays);
 
+              // Obtener información del equipo para verificación
+              const equipmentInfo = crane.crane as any;
+              let equipmentName = equipmentInfo?.nombre || 'Equipo';
+              
+              // Limpiar el nombre del equipo para comparación
+              equipmentName = equipmentName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+              equipmentName = equipmentName.replace(/\s+$/, '');
+
+              // Verificar si ya existe un evento para esta devolución específica
+               let eventExists = false;
+               try {
+                 const existingEvents = await this.eventsService.findByDateRange(
+                   new Date(returnDate.getTime() - 24 * 60 * 60 * 1000), // 1 día antes
+                   new Date(returnDate.getTime() + 24 * 60 * 60 * 1000), // 1 día después
+                 );
+
+                eventExists = existingEvents.some(event => 
+                  event.description.includes(equipmentName) &&
+                  event.title.includes('Devolución de equipo') &&
+                  event.title.includes(equipmentName)
+                );
+              } catch (error) {
+                // Si hay error verificando eventos, asumir que no existe
+                eventExists = false;
+              }
+
               // Obtener información del cliente
               const client = quote.clientId as any;
               const clientName = client?.name || 'Cliente desconocido';
-              
-              // Obtener información del equipo
-              const equipmentInfo = crane.crane as any;
-              const equipmentName = equipmentInfo?.nombre || 'Equipo';
               const equipmentModel = equipmentInfo?.modelo || 'N/A';
 
+              const wouldCreate = !eventExists;
+              let actuallyCreated = false;
+              
+              if (wouldCreate && shouldCreateReal) {
+                try {
+                  // Crear evento real
+                  const eventTitle = `Recordatorio: Devolución de equipo ${equipmentName}`;
+                  const eventDescription = `El cliente ${clientName} debe devolver el equipo ${equipmentName}`;
+                  
+                  await this.eventsService.createEvent(
+                    eventTitle,
+                    eventDescription,
+                    returnDate,
+                    '000000000000000000000000', // userId temporal
+                    'Sistema Automático', // userName
+                    'service', // type
+                    {
+                      location: '',
+                      notes: '',
+                      reminderMinutes: 15,
+                      allDay: false,
+                      color: '#4CAF50'
+                    }
+                  );
+                  actuallyCreated = true;
+                } catch (error) {
+                  console.error('Error creating real event:', error);
+                }
+              }
+              
               results.push({
                 quoteId: quote._id,
                 quoteName: quote.name,
@@ -329,10 +388,14 @@ export class QuoteController {
                 deliveryDate: crane.fecha_entrega,
                 rentalDays,
                 returnDate,
-                eventWouldBeCreated: true
+                eventWouldBeCreated: wouldCreate,
+                eventExists: eventExists,
+                actuallyCreated: actuallyCreated
               });
 
-              eventsCreated++;
+              if (wouldCreate) {
+                eventsCreated++;
+              }
             } catch (error) {
               results.push({
                 quoteId: quote._id,
