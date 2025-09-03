@@ -39,7 +39,10 @@ export class QuoteService {
   }
 
   async findByStatus(status: string): Promise<Quote[]> {
-    return this.quoteModel.find({ status }).populate('cranes').exec();
+    return this.quoteModel.find({ status })
+      .populate('cranes.crane')
+      .populate('clientId')
+      .exec();
   }
 
   async switchStatus(id: string, status: string, userId?: string): Promise<Quote> {

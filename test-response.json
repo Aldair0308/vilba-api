@@ -1,0 +1,30 @@
+﻿{
+    "success":  true,
+    "message":  "Return events test completed. Would create 2 events",
+    "eventsCreated":  2,
+    "totalQuotes":  1,
+    "results":  [
+                    {
+                        "quoteId":  "68b721b6fc1c6d743f0f357e",
+                        "quoteName":  "COT-20250902-335",
+                        "clientName":  "Ferretería Atenco",
+                        "equipmentName":  "Camion Kenworth",
+                        "equipmentModel":  "500",
+                        "deliveryDate":  "2025-09-02T16:58:00.000Z",
+                        "rentalDays":  2,
+                        "returnDate":  "2025-09-04T06:00:00.000Z",
+                        "eventWouldBeCreated":  true
+                    },
+                    {
+                        "quoteId":  "68b721b6fc1c6d743f0f357e",
+                        "quoteName":  "COT-20250902-335",
+                        "clientName":  "Ferretería Atenco",
+                        "equipmentName":  "Podadora ",
+                        "equipmentModel":  "N/A",
+                        "deliveryDate":  "2025-09-01T16:58:00.000Z",
+                        "rentalDays":  2,
+                        "returnDate":  "2025-09-03T06:00:00.000Z",
+                        "eventWouldBeCreated":  true
+                    }
+                ]
+}
