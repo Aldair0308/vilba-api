@@ -283,8 +283,8 @@ export class QuoteController {
         // Si la fecha de fin de renta ya pasó
         if (rentalEndDate <= now) {
           try {
-            // Cambiar estado de la grúa de 'en_renta' a 'disponible'
-            await this.quoteService.updateCraneStatus(equipment.craneId, 'disponible');
+            // Cambiar estado de la grúa de 'en_renta' a 'activo'
+            await this.quoteService.updateCraneStatus(equipment.craneId, 'activo');
             equipmentUpdated++;
             results[results.length - 1].processed = true;
           } catch (error) {
@@ -295,7 +295,7 @@ export class QuoteController {
 
       return {
         success: true,
-        message: `Rental end test completed. Updated ${equipmentUpdated} equipment to 'disponible'`,
+        message: `Rental end test completed. Updated ${equipmentUpdated} equipment to 'activo'`,
         equipmentProcessed: equipmentUpdated,
         totalEquipment: rentedEquipment.length,
         results

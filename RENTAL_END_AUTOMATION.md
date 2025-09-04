@@ -2,7 +2,7 @@
 
 ## Descripción
 
-Este documento describe el sistema automatizado que cambia el estado de los equipos rentados de 'en_renta' a 'disponible' cuando termina su período de renta.
+Este documento describe el sistema automatizado que cambia el estado de los equipos rentados de 'en_renta' a 'activo' cuando termina su período de renta.
 
 ## Funcionamiento
 
@@ -22,7 +22,7 @@ Este documento describe el sistema automatizado que cambia el estado de los equi
    - Compara la fecha actual con `rentalEndDate`
    - Si `rentalEndDate <= now`, el equipo debe cambiar de estado
 
-4. **Actualización de Estado**: Cambia automáticamente el estado del equipo de 'en_renta' a 'disponible'
+4. **Actualización de Estado**: Cambia automáticamente el estado del equipo de 'en_renta' a 'activo'
 
 5. **Logging**: Registra todas las operaciones para auditoría y debugging
 
@@ -56,7 +56,7 @@ Permite probar manualmente el proceso de finalización de renta.
 ```json
 {
   "success": true,
-  "message": "Rental end test completed. Updated 0 equipment to 'disponible'",
+  "message": "Rental end test completed. Updated 0 equipment to 'activo'",
   "equipmentProcessed": 0,
   "totalEquipment": 2,
   "results": [
@@ -79,8 +79,8 @@ El cron job genera logs detallados:
 🔄 Checking for equipment that should end rental period...
 📋 Found 2 rented equipment to check
 🏗️ Ending rental for crane 6886c1af56288af6046d24d1 - rental period expired
-✅ Crane 6886c1af56288af6046d24d1 status updated to 'disponible' - rental ended
-🎉 Rental end check completed. Updated 1 equipment to 'disponible'
+✅ Crane 6886c1af56288af6046d24d1 status updated to 'activo' - rental ended
+🎉 Rental end check completed. Updated 1 equipment to 'activo'
 ```
 
 ## Consideraciones Técnicas

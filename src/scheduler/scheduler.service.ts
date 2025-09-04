@@ -438,14 +438,14 @@ export class SchedulerService {
               `🏗️ Ending rental for crane ${equipment.craneId} - rental period expired`,
             );
 
-            // Cambiar estado de la grúa de 'en_renta' a 'disponible'
+            // Cambiar estado de la grúa de 'en_renta' a 'activo'
             await this.craneService.update(equipment.craneId, {
-              estado: 'disponible',
+              estado: 'activo',
             });
             equipmentUpdated++;
 
             this.logger.log(
-              `✅ Crane ${equipment.craneId} status updated to 'disponible' - rental ended`,
+              `✅ Crane ${equipment.craneId} status updated to 'activo' - rental ended`,
             );
           } catch (error) {
             this.logger.error(
