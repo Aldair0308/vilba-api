@@ -401,8 +401,8 @@ export class SchedulerService {
     }
   }
 
-  // Ejecutar cada hora para verificar equipos que deben cambiar de 'en_renta' a 'disponible'
-  @Cron('0 0 * * * *', {
+  // Ejecutar todos los días a las 11:58 PM para verificar equipos que deben cambiar de 'en_renta' a 'disponible'
+  @Cron('58 23 * * *', {
     name: 'rentalEndChecker',
     timeZone: 'America/Mexico_City',
   })
